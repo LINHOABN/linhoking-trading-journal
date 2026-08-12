@@ -1,0 +1,81 @@
+import { useCallback, useEffect, useState } from 'react'
+import * as api from '../lib/api'
+import { useLiveSocket } from './useLiveSocket'
+import type { Trade, CapitalPoint, LotStep } from '../types'
+
+interface DashboardData {
+  trades: Trade[]
+  riskState: api.RiskState | null
+  startingCapital: number
+  totalInvested: number
+  deposits: api.Deposit[]
+  capitalCurve: CapitalPoint[]
+  lotHistory: LotStep[]
+  stats: api.StatsSummary | null
+  loading: boolean
+  error: string | null
+  liveConnected: boolean
+  refetch: () => void
+}
+
+export function useDashboardData(): DashboardData {
+  const [trades, setTrades] = useState<Trade[]>([])
+  const [riskState, setRiskState] = useState<api.RiskState | null>(null)
+  const [startingCapital, setStartingCapital] = useState(0)
+  const [totalInvested, setTotalInvested] = useState(0)
+  const [deposits, setDeposits] = useState<api.Deposit[]>([])
+  const [capitalCurve, setCapitalCurve] = useState<CapitalPoint[]>([])
+  const [lotHistory, setLotHistory] = useState<LotStep[]>([])
+  const [stats, setStats] = useState<api.StatsSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      const [tradesData, riskData, tierData, curveData, lotData, statsData, depositsData] = await Promise.all([
+        api.getTrades(),
+        api.getRiskState(),
+        api.getTier(),
+        api.getCapitalCurve(),
+        api.getLotHistory(),
+        api.getStatsSummary(),
+        api.getDeposits().catch(() => ({ total_invested: 0, deposit_count: 0, deposits: [] })),
+      ])
+      setTrades(tradesData)
+      setRiskState(riskData)
+      setStartingCapital(tierData.startingCapital)
+      setTotalInvested(depositsData.total_invested)
+      setDeposits(depositsData.deposits)
+      setCapitalCurve(curveData)
+      setLotHistory(lotData)
+      setStats(statsData)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof api.ApiError ? e.message : 'Impossible de charger les données')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  // Any live event (new trade, MT5 sync) triggers a refetch
+  const liveConnected = useLiveSocket(true, load)
+
+  return {
+    trades,
+    riskState,
+    startingCapital,
+    totalInvested,
+    deposits,
+    capitalCurve,
+    lotHistory,
+    stats,
+    loading,
+    error,
+    liveConnected,
+    refetch: load,
+  }
+}
