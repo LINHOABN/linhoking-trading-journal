@@ -47,7 +47,7 @@ async def vercel_route_fixer(request, call_next):
         forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-matched-path")
         if forwarded_uri and forwarded_uri != request.url.path:
             request.scope["path"] = forwarded_uri.split("?")[0]
-        elif request.url.path == "/api/index.py" or request.url.path == "/api":
+        elif request.url.path in ("/api/main.py", "/api/index.py", "/api"):
             request.scope["path"] = "/"
     return await call_next(request)
 
@@ -66,11 +66,6 @@ app.include_router(deposits.router)
 
 if not IS_VERCEL:
     app.include_router(ws.router)
-
-
-@app.get("/")
-def root():
-    return {"status": "ok", "message": "LINHOKING Trading Journal API is active", "version": "0.2.0"}
 
 
 @app.get("/favicon.ico", include_in_schema=False)
