@@ -35,11 +35,21 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=["*"] if IS_VERCEL else settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def vercel_route_fixer(request, call_next):
+    if IS_VERCEL:
+        forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-matched-path")
+        if forwarded_uri and forwarded_uri != request.url.path:
+            request.scope["path"] = forwarded_uri.split("?")[0]
+        elif request.url.path == "/api/index.py" or request.url.path == "/api":
+            request.scope["path"] = "/"
+    return await call_next(request)
 
 # Only mount uploads directory locally (Vercel has no persistent filesystem)
 if not IS_VERCEL:

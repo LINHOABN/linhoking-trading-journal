@@ -1,6 +1,6 @@
 import type { Trade, Tier, CapitalPoint, LotStep, Direction, Emotion } from '../types'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.DEV ? 'http://localhost:8000' : '')
 const TOKEN_KEY = 'linhoking_token'
 
 export function getToken(): string | null {
