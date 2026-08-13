@@ -68,6 +68,16 @@ if not IS_VERCEL:
     app.include_router(ws.router)
 
 
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "LINHOKING Trading Journal API is active", "version": "0.2.0"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return {}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "version": "0.2.0", "env": "vercel" if IS_VERCEL else "local"}
