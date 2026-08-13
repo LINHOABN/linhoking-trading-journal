@@ -1,7 +1,7 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build",
-    "outputDirectory": "frontend/dist",
+    "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../public && cp -r dist/* ../public/",
+    "outputDirectory": "public",
     "rewrites": [
         {
             "source": "/api/:path*",
@@ -40,7 +40,7 @@
             "destination": "/api/main.py"
         },
         {
-            "source": "/((?!assets|.*\\..*).*)",
+            "source": "/((?!api|auth|trades|tiers|stats|risk|deposits|mt5|health|assets|.*\\..*).*)",
             "destination": "/index.html"
         }
     ]

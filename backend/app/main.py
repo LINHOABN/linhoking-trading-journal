@@ -36,52 +36,12 @@ app = FastAPI(
     version="0.2.0",
 )
 
-INDEX_PATH = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "index.html"
-INDEX_HTML = """<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LINHOKING — Trading Journal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <script type="module" crossorigin src="/assets/index-B5Mr9YoW.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BazwQA1c.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>"""
-
-def get_index_response():
-    if INDEX_PATH.exists():
-        return FileResponse(INDEX_PATH)
-    return HTMLResponse(content=INDEX_HTML)
+INDEX_PATH = Path(__file__).resolve().parent.parent.parent / "public" / "index.html"
+if not INDEX_PATH.exists():
+    INDEX_PATH = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "index.html"
 
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
-    path = request.url.path
-    if not any(
-        path.startswith(prefix)
-        for prefix in [
-            "/api",
-            "/auth",
-            "/trades",
-            "/tiers",
-            "/stats",
-            "/risk",
-            "/deposits",
-            "/mt5",
-            "/health",
-            "/assets",
-        ]
-    ):
-        return get_index_response()
-
     return JSONResponse(
         status_code=404,
         content={
@@ -128,11 +88,6 @@ app.include_router(deposits.router)
 
 if not IS_VERCEL:
     app.include_router(ws.router)
-
-@app.get("/index.html", response_class=HTMLResponse)
-@app.get("/", response_class=HTMLResponse)
-async def serve_index():
-    return get_index_response()
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
