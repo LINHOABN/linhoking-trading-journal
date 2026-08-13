@@ -40,7 +40,7 @@
             "destination": "/api/main.py"
         },
         {
-            "source": "/:path*",
+            "source": "/((?!assets|.*\\..*).*)",
             "destination": "/index.html"
         }
     ]
