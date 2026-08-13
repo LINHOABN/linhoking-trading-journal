@@ -2,21 +2,46 @@
     "version": 2,
     "buildCommand": "cd frontend && npm install && npm run build",
     "outputDirectory": "frontend/dist",
-    "routes": [
+    "rewrites": [
         {
-            "src": "/(auth|trades|tiers|stats|risk|deposits|mt5|health)(.*)",
-            "dest": "/api/index.py"
+            "source": "/api/:path*",
+            "destination": "/api/index.py"
         },
         {
-            "src": "/api/(.*)",
-            "dest": "/api/index.py"
+            "source": "/auth/:path*",
+            "destination": "/api/index.py"
         },
         {
-            "handle": "filesystem"
+            "source": "/trades/:path*",
+            "destination": "/api/index.py"
         },
         {
-            "src": "/(.*)",
-            "dest": "/index.html"
+            "source": "/tiers/:path*",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/stats/:path*",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/risk/:path*",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/deposits/:path*",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/mt5/:path*",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/health",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/:path*",
+            "destination": "/index.html"
         }
     ]
 }
