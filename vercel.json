@@ -40,8 +40,8 @@
             "destination": "/api/main.py"
         },
         {
-            "source": "/((?!api|auth|trades|tiers|stats|risk|deposits|mt5|health|assets|.*\\..*).*)",
-            "destination": "/index.html"
+            "source": "/((?!assets|.*\\..*).*)",
+            "destination": "/api/main.py"
         }
     ]
 }
