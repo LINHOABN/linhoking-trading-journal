@@ -36,56 +36,8 @@ app = FastAPI(
     version="0.2.0",
 )
 
-def get_index_html_response():
-    for p in [
-        Path(__file__).resolve().parent.parent.parent / "public" / "index.html",
-        Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "index.html",
-        Path(__file__).resolve().parent.parent / "dist" / "index.html",
-    ]:
-        if p.exists():
-            return FileResponse(p)
-
-    # Fallback inline HTML if file is not found on disk inside lambda
-    fallback_html = """<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LINHOKING — Trading Journal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>"""
-    return HTMLResponse(content=fallback_html)
-
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
-    path = request.url.path
-    # If not an API or asset request, serve index.html for SPA routing
-    if not any(
-        path.startswith(prefix)
-        for prefix in [
-            "/api",
-            "/auth",
-            "/trades",
-            "/tiers",
-            "/stats",
-            "/risk",
-            "/deposits",
-            "/mt5",
-            "/health",
-            "/assets",
-        ]
-    ):
-        return get_index_html_response()
-
     return JSONResponse(
         status_code=404,
         content={
@@ -132,11 +84,6 @@ app.include_router(deposits.router)
 
 if not IS_VERCEL:
     app.include_router(ws.router)
-
-@app.get("/index.html", response_class=HTMLResponse)
-@app.get("/", response_class=HTMLResponse)
-async def serve_index():
-    return get_index_html_response()
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():

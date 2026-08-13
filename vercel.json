@@ -1,7 +1,7 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../public && cp -r dist/* ../public/",
-    "outputDirectory": "public",
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/dist",
     "rewrites": [
         {
             "source": "/api/:path*",
@@ -37,10 +37,6 @@
         },
         {
             "source": "/health",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/((?!assets|.*\\..*).*)",
             "destination": "/api/main.py"
         }
     ]
