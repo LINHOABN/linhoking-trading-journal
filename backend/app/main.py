@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from fastapi.staticfiles import StaticFiles
@@ -32,6 +34,21 @@ app = FastAPI(
     description="API pour le journal de trading XAU/USD intraday LINHOKING.",
     version="0.2.0",
 )
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Not Found",
+            "requested_url": str(request.url),
+            "requested_path": request.url.path,
+            "scope_path": request.scope.get("path"),
+            "method": request.method,
+            "headers": dict(request.headers),
+            "is_vercel": IS_VERCEL,
+        },
+    )
 
 app.add_middleware(
     CORSMiddleware,
