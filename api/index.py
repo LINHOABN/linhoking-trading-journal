@@ -1,5 +1,8 @@
+import os
 import sys
 from pathlib import Path
+
+os.environ["VERCEL"] = "1"
 
 # Add backend directory to sys.path
 backend_dir = Path(__file__).resolve().parent.parent / "backend"
