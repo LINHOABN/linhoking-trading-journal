@@ -82,7 +82,7 @@ async def create_trade(
 
 
 @router.patch("/{trade_id}", response_model=schemas.TradeOut)
-def update_trade(
+async def update_trade(
     trade_id: str,
     payload: schemas.TradeUpdate,
     current_user: models.User = Depends(get_current_user),
@@ -101,6 +101,9 @@ def update_trade(
 
     db.commit()
     db.refresh(trade)
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_updated", "trade_id": trade.id}
+    )
     return trade
 
 
@@ -150,11 +153,14 @@ async def upload_trade_screenshot(
     trade.screenshot_url = json.dumps(existing_urls)
     db.commit()
     db.refresh(trade)
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_updated", "trade_id": trade.id}
+    )
     return trade
 
 
 @router.delete("/{trade_id}/screenshot", response_model=schemas.TradeOut)
-def delete_trade_screenshot(
+async def delete_trade_screenshot(
     trade_id: str,
     url: str,
     current_user: models.User = Depends(get_current_user),
@@ -183,11 +189,14 @@ def delete_trade_screenshot(
 
     db.commit()
     db.refresh(trade)
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_updated", "trade_id": trade.id}
+    )
     return trade
 
 
 @router.delete("/{trade_id}", status_code=204)
-def delete_trade(
+async def delete_trade(
     trade_id: str,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -201,3 +210,6 @@ def delete_trade(
         raise HTTPException(status_code=404, detail="Trade introuvable")
     db.delete(trade)
     db.commit()
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_deleted", "trade_id": trade_id}
+    )

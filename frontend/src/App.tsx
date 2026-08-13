@@ -17,6 +17,7 @@ import EditStartingCapitalModal from './components/EditStartingCapitalModal'
 
 function Dashboard() {
   const [isEditCapitalOpen, setIsEditCapitalOpen] = useState(false)
+  const { user, refreshUser } = useAuth()
   const {
     trades,
     riskState,
@@ -30,9 +31,13 @@ function Dashboard() {
     error,
     liveConnected,
     refetch,
-  } = useDashboardData()
-  const { user } = useAuth()
+  } = useDashboardData(refreshUser)
   const mt5Balance = user?.mt5Balance ?? null
+
+  const handleRefetch = () => {
+    refetch()
+    refreshUser()
+  }
 
   const now = new Date()
 
@@ -75,7 +80,7 @@ function Dashboard() {
           deposits={deposits}
           mt5Balance={mt5Balance}
           onEditStartingCapital={() => setIsEditCapitalOpen(true)}
-          onDepositsUpdated={refetch}
+          onDepositsUpdated={handleRefetch}
         />
 
         {!hasData ? (
@@ -101,14 +106,14 @@ function Dashboard() {
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">
-                <TradingCalendar trades={trades} onTradeUpdated={refetch} />
+                <TradingCalendar trades={trades} onTradeUpdated={handleRefetch} />
               </div>
               <StatsPanel stats={stats!} />
             </div>
 
             <div className="mt-4">
               {trades.length > 0 ? (
-                <TradeJournal trades={trades} onTradeUpdated={refetch} />
+                <TradeJournal trades={trades} onTradeUpdated={handleRefetch} />
               ) : (
                 <div className="border border-graphite-700 p-8 text-center">
                   <p className="font-mono text-[12px] text-ink-500 dark:text-ink-300">
@@ -129,7 +134,7 @@ function Dashboard() {
         initialCapital={startingCapital || 200}
         isOpen={isEditCapitalOpen}
         onClose={() => setIsEditCapitalOpen(false)}
-        onSaved={refetch}
+        onSaved={handleRefetch}
       />
     </div>
   )

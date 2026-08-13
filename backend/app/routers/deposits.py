@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
 from app.deps import get_current_user
+from app.ws_manager import manager
 
 router = APIRouter(prefix="/deposits", tags=["deposits"])
 
@@ -30,7 +31,7 @@ def list_deposits(
 
 
 @router.post("/", response_model=schemas.DepositOut, status_code=201)
-def add_deposit(
+async def add_deposit(
     payload: schemas.DepositCreate,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -45,11 +46,14 @@ def add_deposit(
     db.add(deposit)
     db.commit()
     db.refresh(deposit)
+    await manager.send_to_user(
+        current_user.id, {"type": "deposit_updated", "deposit_id": deposit.id}
+    )
     return deposit
 
 
 @router.delete("/{deposit_id}", status_code=204)
-def delete_deposit(
+async def delete_deposit(
     deposit_id: str,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -63,3 +67,6 @@ def delete_deposit(
     if deposit:
         db.delete(deposit)
         db.commit()
+        await manager.send_to_user(
+            current_user.id, {"type": "deposit_updated", "deposit_id": deposit_id}
+        )

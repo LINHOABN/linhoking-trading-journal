@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { wsUrl } from '../lib/api'
+import { wsUrl, getToken } from '../lib/api'
 
 export function useLiveSocket(enabled: boolean, onEvent: () => void) {
   const [connected, setConnected] = useState(false)
@@ -9,25 +9,65 @@ export function useLiveSocket(enabled: boolean, onEvent: () => void) {
   useEffect(() => {
     if (!enabled) return
 
-    let socket: WebSocket
-    let cancelled = false
+    let socket: WebSocket | null = null
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+    let isCancelled = false
 
-    try {
-      socket = new WebSocket(wsUrl())
-    } catch {
-      return
+    function connect() {
+      const token = getToken()
+      if (!token) {
+        scheduleReconnect()
+        return
+      }
+
+      try {
+        socket = new WebSocket(wsUrl())
+      } catch {
+        scheduleReconnect()
+        return
+      }
+
+      socket.onopen = () => {
+        if (!isCancelled) setConnected(true)
+      }
+
+      socket.onclose = (event) => {
+        if (!isCancelled) {
+          setConnected(false)
+          // Code 4401 = auth error (token invalide/expiré) — ne pas boucler
+          if (event.code === 4401) return
+          scheduleReconnect()
+        }
+      }
+
+      socket.onerror = () => {
+        if (!isCancelled) {
+          setConnected(false)
+        }
+      }
+
+      socket.onmessage = () => {
+        onEventRef.current()
+      }
     }
 
-    socket.onopen = () => !cancelled && setConnected(true)
-    socket.onclose = () => !cancelled && setConnected(false)
-    socket.onerror = () => !cancelled && setConnected(false)
-    socket.onmessage = () => onEventRef.current()
+    function scheduleReconnect() {
+      if (isCancelled) return
+      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      reconnectTimeout = setTimeout(() => {
+        if (!isCancelled) connect()
+      }, 3000)
+    }
+
+    connect()
 
     return () => {
-      cancelled = true
-      socket.close()
+      isCancelled = true
+      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      if (socket) socket.close()
     }
   }, [enabled])
 
   return connected
 }
+

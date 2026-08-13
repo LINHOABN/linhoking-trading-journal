@@ -18,7 +18,7 @@ interface DashboardData {
   refetch: () => void
 }
 
-export function useDashboardData(): DashboardData {
+export function useDashboardData(onRefreshUser?: () => void): DashboardData {
   const [trades, setTrades] = useState<Trade[]>([])
   const [riskState, setRiskState] = useState<api.RiskState | null>(null)
   const [startingCapital, setStartingCapital] = useState(0)
@@ -50,15 +50,20 @@ export function useDashboardData(): DashboardData {
       setLotHistory(lotData)
       setStats(statsData)
       setError(null)
+      onRefreshUser?.()
     } catch (e) {
       setError(e instanceof api.ApiError ? e.message : 'Impossible de charger les données')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [onRefreshUser])
 
   useEffect(() => {
     load()
+    const interval = setInterval(() => {
+      load()
+    }, 5000)
+    return () => clearInterval(interval)
   }, [load])
 
   // Any live event (new trade, MT5 sync) triggers a refetch

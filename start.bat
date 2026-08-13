@@ -1,13 +1,5 @@
 @echo off
-REM start.bat — Lance LINHOKING (backend FastAPI + frontend React) en local sur Windows.
-REM
-REM Structure attendue a cote de ce script :
-REM   .\backend    (contenu de linhoking-backend.zip)
-REM   .\frontend   (contenu de linhoking-trading-journal-frontend-1.zip)
-REM
-REM Prerequis : Python 3.10+ (coche "Add to PATH" a l'installation), Node.js 18+,
-REM             une base PostgreSQL accessible.
-
+REM start.bat -- Lance LINHOKING (backend FastAPI + frontend React) en local sur Windows.
 setlocal enabledelayedexpansion
 set SCRIPT_DIR=%~dp0
 set BACKEND_DIR=%SCRIPT_DIR%backend
@@ -20,92 +12,80 @@ echo.
 
 REM ---------- Verifications preliminaires ----------
 if not exist "%BACKEND_DIR%" (
-  echo [ERREUR] Dossier "backend" introuvable a cote de start.bat.
-  echo          Verifie qu'il s'appelle bien "backend" et qu'il est au meme niveau que ce script.
+  echo [ERREUR] Dossier "backend" introuvable.
   goto :end
 )
 if not exist "%FRONTEND_DIR%" (
-  echo [ERREUR] Dossier "frontend" introuvable a cote de start.bat.
-  echo          Verifie qu'il s'appelle bien "frontend" et qu'il est au meme niveau que ce script.
+  echo [ERREUR] Dossier "frontend" introuvable.
   goto :end
+)
+where python >nul 2>nul || (echo [ERREUR] Python non trouve. && goto :end)
+where npm    >nul 2>nul || (echo [ERREUR] npm non trouve.    && goto :end)
+
+REM ---------- Nettoyage des anciens process sur port 8000 ----------
+echo Nettoyage des anciens processus sur le port 8000...
+for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":8000 " ^| findstr "LISTENING"') do (
+  if not "%%P"=="0" (
+    taskkill /F /PID %%P >nul 2>nul
+  )
 )
 
-where python >nul 2>nul
-if errorlevel 1 (
-  echo [ERREUR] "python" n'est pas reconnu. Python n'est pas installe ou pas dans le PATH.
-  echo          Installe Python depuis https://python.org et coche "Add python.exe to PATH".
-  goto :end
+REM ---------- Nettoyage des anciens process sur port 5173 ----------
+echo Nettoyage des anciens processus sur le port 5173...
+for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":5173 " ^| findstr "LISTENING"') do (
+  if not "%%P"=="0" (
+    taskkill /F /PID %%P >nul 2>nul
+  )
 )
-
-where npm >nul 2>nul
-if errorlevel 1 (
-  echo [ERREUR] "npm" n'est pas reconnu. Node.js n'est pas installe ou pas dans le PATH.
-  echo          Installe Node.js depuis https://nodejs.org.
-  goto :end
-)
+timeout /t 2 /nobreak >nul
 
 REM ---------- BACKEND ----------
-echo === Preparation du backend ===
+echo.
+echo === Demarrage du backend ===
 cd /d "%BACKEND_DIR%"
 
 if not exist "venv" (
   echo Creation de l'environnement virtuel...
   python -m venv venv
-  if errorlevel 1 (
-    echo [ERREUR] La creation du venv a echoue.
-    goto :end
-  )
 )
 
 call venv\Scripts\activate.bat
-if errorlevel 1 (
-  echo [ERREUR] Impossible d'activer le venv.
-  goto :end
-)
 
 echo Installation des dependances Python...
-pip install -r requirements.txt
-if errorlevel 1 (
-  echo [ERREUR] pip install a echoue. Regarde le message ci-dessus.
-  goto :end
-)
+pip install -q -r requirements.txt
 
 if not exist ".env" (
-  echo Copie de .env.example vers .env - pense a renseigner DATABASE_URL et SECRET_KEY
-  copy .env.example .env >nul
+  if exist ".env.example" copy .env.example .env >nul
 )
 
-echo Demarrage de l'API sur http://localhost:8000 (docs: /docs)
 start "LINHOKING backend" cmd /k "cd /d "%BACKEND_DIR%" && call venv\Scripts\activate.bat && uvicorn app.main:app --reload --port 8000"
 
 REM ---------- FRONTEND ----------
 cd /d "%FRONTEND_DIR%"
-echo === Preparation du frontend ===
+echo.
+echo === Demarrage du frontend ===
 
 if not exist "node_modules" (
-  echo Installation des dependances npm - ca peut prendre 1-2 minutes...
+  echo Installation des dependances npm...
   call npm install
-  if errorlevel 1 (
-    echo [ERREUR] npm install a echoue. Regarde le message ci-dessus.
-    goto :end
-  )
 )
 
 if not exist ".env" (
-  echo Copie de .env.example vers .env
-  copy .env.example .env >nul
+  if exist ".env.example" copy .env.example .env >nul
 )
 
-echo Demarrage du frontend sur http://localhost:5173
 start "LINHOKING frontend" cmd /k "cd /d "%FRONTEND_DIR%" && npm run dev"
+
+timeout /t 3 /nobreak >nul
 
 echo.
 echo ============================================
-echo   LINHOKING est lance dans deux fenetres :
-echo     - Backend  : http://localhost:8000/docs
-echo     - Frontend : http://localhost:5173
-echo   Ferme ces fenetres pour tout arreter.
+echo   LINHOKING est lance !
+echo     Backend  : http://localhost:8000/docs
+echo     Frontend : http://localhost:5173
 echo ============================================
+echo.
+echo Ferme les deux fenetres de commande pour tout arreter.
 
 :end
 echo.
