@@ -14,9 +14,11 @@ import TradeJournal from './components/TradeJournal'
 import TradingCalendar from './components/TradingCalendar'
 import StatsPanel from './components/StatsPanel'
 import EditStartingCapitalModal from './components/EditStartingCapitalModal'
+import MT5Modal from './components/MT5Modal'
 
 function Dashboard() {
   const [isEditCapitalOpen, setIsEditCapitalOpen] = useState(false)
+  const [isMt5ModalOpen, setIsMt5ModalOpen] = useState(false)
   const { user, refreshUser } = useAuth()
   const {
     trades,
@@ -69,7 +71,7 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900 transition-colors dark:bg-graphite-900 dark:text-paper-50">
-      <Header liveConnected={liveConnected} />
+      <Header liveConnected={liveConnected} onOpenMt5Modal={() => setIsMt5ModalOpen(true)} />
 
       <main className="mx-auto max-w-[1200px] px-6 py-8">
         {/* Capital banner — always visible when tier or mt5Balance is available */}
@@ -135,6 +137,13 @@ function Dashboard() {
         isOpen={isEditCapitalOpen}
         onClose={() => setIsEditCapitalOpen(false)}
         onSaved={handleRefetch}
+      />
+
+      <MT5Modal
+        user={user}
+        isOpen={isMt5ModalOpen}
+        onClose={() => setIsMt5ModalOpen(false)}
+        onKeyRotated={handleRefetch}
       />
     </div>
   )

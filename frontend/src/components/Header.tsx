@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext'
 
 interface Props {
   liveConnected: boolean
+  onOpenMt5Modal?: () => void
 }
 
-export default function Header({ liveConnected }: Props) {
+export default function Header({ liveConnected, onOpenMt5Modal }: Props) {
   const { theme, toggle } = useTheme()
   const { user, logout } = useAuth()
 
@@ -27,16 +28,24 @@ export default function Header({ liveConnected }: Props) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="hidden items-center gap-2 border border-graphite-700/50 dark:border-graphite-700/50 rounded-lg px-3 py-1 font-mono text-[11px] text-ink-500 dark:text-ink-300 sm:flex bg-graphite-800/10 backdrop-blur-xs">
-          <Radio size={12} className={liveConnected ? 'text-signal-gain animate-pulse' : 'text-ink-500'} />
-          <span className="font-semibold">{liveConnected ? 'Live MT5' : 'Hors ligne'}</span>
-        </div>
+        <button
+          onClick={onOpenMt5Modal}
+          className="hidden items-center gap-2 border border-graphite-700/50 dark:border-graphite-700/50 hover:border-signal-data/50 rounded-lg px-3 py-1 font-mono text-[11px] text-ink-500 dark:text-ink-300 sm:flex bg-graphite-800/10 backdrop-blur-xs transition-all cursor-pointer group"
+          title="Cliquez pour synchroniser votre compte MT5"
+        >
+          <Radio size={12} className={liveConnected ? 'text-signal-gain animate-pulse' : 'text-ink-500 group-hover:text-signal-data'} />
+          <span className="font-semibold group-hover:text-signal-data">{liveConnected ? 'Live MT5' : 'Synchro MT5'}</span>
+        </button>
 
         {user && user.mt5AccountNumber && (
-          <div className="hidden items-center gap-1.5 border border-signal-gain/20 bg-signal-gain/5 rounded-lg px-3 py-1 font-mono text-[11px] text-signal-gain sm:flex">
+          <button
+            onClick={onOpenMt5Modal}
+            className="hidden items-center gap-1.5 border border-signal-gain/20 bg-signal-gain/5 hover:bg-signal-gain/10 rounded-lg px-3 py-1 font-mono text-[11px] text-signal-gain sm:flex transition-all cursor-pointer"
+            title="Détails du compte MT5"
+          >
             <span className="font-bold">{user.mt5Broker || 'MT5'}</span>
             <span className="opacity-75">#{user.mt5AccountNumber}</span>
-          </div>
+          </button>
         )}
 
         {user && (
