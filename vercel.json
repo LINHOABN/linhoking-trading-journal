@@ -1,6 +1,6 @@
 {
     "version": 2,
-    "buildCommand": "echo 'skip-build'",
+    "buildCommand": "cd frontend && npm install && npm run build",
     "outputDirectory": "frontend/dist",
     "rewrites": [
         {
