@@ -16,8 +16,14 @@ export function clearToken() {
 }
 
 export function wsUrl(): string {
-  const base = API_URL.replace(/^http/, 'ws')
   const token = getToken()
+  let base: string
+  if (API_URL) {
+    base = API_URL.replace(/^http/, 'ws')
+  } else {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    base = `${proto}//${window.location.host}`
+  }
   return `${base}/ws/live?token=${encodeURIComponent(token ?? '')}`
 }
 
