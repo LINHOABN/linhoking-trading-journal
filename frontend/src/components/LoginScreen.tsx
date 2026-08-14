@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { getApiUrl } from '../lib/api'
 
 export default function LoginScreen() {
   const { login, register, error } = useAuth()
@@ -24,6 +25,12 @@ export default function LoginScreen() {
     }
   }
 
+  function handleDemoFill() {
+    setMode('login')
+    setEmail('bob@linhoking.com')
+    setPassword('password123')
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper-50 px-6 dark:bg-graphite-900">
       <div className="w-full max-w-[380px]">
@@ -46,14 +53,14 @@ export default function LoginScreen() {
             <button
               type="button"
               onClick={() => setMode('login')}
-              className={mode === 'login' ? 'text-ink-900 dark:text-paper-50' : 'text-ink-500 dark:text-ink-300'}
+              className={mode === 'login' ? 'font-bold text-signal-data dark:text-signal-data' : 'text-ink-500 dark:text-ink-300'}
             >
               Connexion
             </button>
             <button
               type="button"
               onClick={() => setMode('register')}
-              className={mode === 'register' ? 'text-ink-900 dark:text-paper-50' : 'text-ink-500 dark:text-ink-300'}
+              className={mode === 'register' ? 'font-bold text-signal-data dark:text-signal-data' : 'text-ink-500 dark:text-ink-300'}
             >
               Créer un compte
             </button>
@@ -66,6 +73,7 @@ export default function LoginScreen() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="ex: trader@linhoking.com"
                 className="w-full border border-graphite-700 bg-transparent px-3 py-2 font-mono text-[13px] text-ink-900 outline-none focus:border-signal-data dark:text-paper-50"
               />
             </Field>
@@ -76,6 +84,7 @@ export default function LoginScreen() {
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
                 className="w-full border border-graphite-700 bg-transparent px-3 py-2 font-mono text-[13px] text-ink-900 outline-none focus:border-signal-data dark:text-paper-50"
               />
             </Field>
@@ -86,14 +95,22 @@ export default function LoginScreen() {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-6 w-full border border-ink-900 bg-ink-900 py-2.5 font-mono text-[12px] uppercase tracking-widest2 text-paper-50 transition-opacity hover:opacity-90 disabled:opacity-50 dark:border-paper-50 dark:bg-paper-50 dark:text-graphite-900"
+            className="mt-6 w-full border border-ink-900 bg-ink-900 py-2.5 font-mono text-[12px] uppercase tracking-widest2 text-paper-50 transition-opacity hover:opacity-90 disabled:opacity-50 dark:border-paper-50 dark:bg-paper-50 dark:text-graphite-900 font-bold"
           >
-            {submitting ? 'Connexion…' : mode === 'login' ? 'Se connecter' : 'Créer le compte'}
+            {submitting ? 'Patientez…' : mode === 'login' ? 'Se connecter' : 'Créer le compte'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDemoFill}
+            className="mt-3 w-full border border-signal-data/40 bg-signal-data/10 py-1.5 font-mono text-[11px] uppercase tracking-wider text-signal-data hover:bg-signal-data/20 transition-colors rounded"
+          >
+            ⚡ Utiliser le Compte Démo
           </button>
         </form>
 
         <p className="mt-4 text-center font-mono text-[10px] text-ink-500 dark:text-ink-300">
-          Connecté à {import.meta.env.VITE_API_URL || 'http://localhost:8000'}
+          Connecté à {getApiUrl() || window.location.origin}
         </p>
       </div>
     </div>

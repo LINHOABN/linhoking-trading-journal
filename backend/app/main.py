@@ -87,14 +87,29 @@ async def serve_assets(file_name: str):
 # ---- DB init (safe) ----
 try:
     from app.database import Base, engine, SessionLocal
+    from app import models
+    from app.security import hash_password
     Base.metadata.create_all(bind=engine)
     try:
         db = SessionLocal()
         from app.services.risk_engine import seed_risk_levels
         seed_risk_levels(db)
+
+        # Seed default user if empty
+        if not db.query(models.User).filter(models.User.email == "bob@linhoking.com").first():
+            demo_user = models.User(
+                email="bob@linhoking.com",
+                hashed_password=hash_password("password123")
+            )
+            db.add(demo_user)
+            db.flush()
+            demo_tier = models.TierConfig(user_id=demo_user.id)
+            db.add(demo_tier)
+            db.commit()
+
         db.close()
-    except Exception:
-        pass
+    except Exception as _seed_err:
+        print(f"[SEED WARNING] {_seed_err}")
 except Exception as _db_err:
     _db_err_msg = str(_db_err)
 
