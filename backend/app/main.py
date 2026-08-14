@@ -36,8 +36,45 @@ app = FastAPI(
     version="0.2.0",
 )
 
+def get_index_html_response():
+    for p in [
+        Path(__file__).resolve().parent.parent.parent / "public" / "index.html",
+        Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "index.html",
+        Path(__file__).resolve().parent.parent / "dist" / "index.html",
+    ]:
+        if p.exists():
+            try:
+                content = p.read_text(encoding="utf-8")
+                return HTMLResponse(content=content)
+            except Exception:
+                return FileResponse(p)
+
+    return JSONResponse(
+        status_code=404,
+        content={"detail": "Index HTML file not found on server"},
+    )
+
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
+    path = request.url.path
+    # If not an API or asset request, serve index.html for SPA routing
+    if not any(
+        path.startswith(prefix)
+        for prefix in [
+            "/api",
+            "/auth",
+            "/trades",
+            "/tiers",
+            "/stats",
+            "/risk",
+            "/deposits",
+            "/mt5",
+            "/health",
+            "/assets",
+        ]
+    ):
+        return get_index_html_response()
+
     return JSONResponse(
         status_code=404,
         content={
@@ -84,6 +121,11 @@ app.include_router(deposits.router)
 
 if not IS_VERCEL:
     app.include_router(ws.router)
+
+@app.get("/index.html", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
+async def serve_root_index():
+    return get_index_html_response()
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
