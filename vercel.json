@@ -1,14 +1,51 @@
 {
     "version": 2,
+    "buildCommand": "echo 'skip-build'",
+    "outputDirectory": "frontend/dist",
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/auth/:path*",
             "destination": "/api/main.py"
+        },
+        {
+            "source": "/trades/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/trades",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/tiers/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/tiers",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/stats/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/risk/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/deposits/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/mt5/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/health",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/((?!assets|.*\\..*).*)",
+            "destination": "/index.html"
         }
-    ],
-    "functions": {
-        "api/main.py": {
-            "includeFiles": "api/static/**"
-        }
-    }
+    ]
 }
