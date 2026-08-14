@@ -1,10 +1,7 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../api/static && cp -r dist/* ../api/static/",
+    "buildCommand": "cd frontend && npm install && npm run build && cd .. && python bundle_assets.py",
     "outputDirectory": "frontend/dist",
-    "includeFiles": [
-        "api/static/**"
-    ],
     "rewrites": [
         {
             "source": "/assets/:path*",

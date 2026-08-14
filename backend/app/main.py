@@ -40,6 +40,14 @@ from fastapi import Response
 from fastapi.responses import HTMLResponse, JSONResponse
 import mimetypes
 
+try:
+    from app.static_bundle import JS_CONTENT, CSS_CONTENT, JS_FILENAME, CSS_FILENAME
+except Exception:
+    JS_CONTENT = None
+    CSS_CONTENT = None
+    JS_FILENAME = "index-B5Mr9YoW.js"
+    CSS_FILENAME = "index-BazwQA1c.css"
+
 STATIC_DIRS = [
     Path(__file__).resolve().parent.parent.parent / "api" / "static",
     Path(__file__).resolve().parent / "static",
@@ -48,16 +56,22 @@ STATIC_DIRS = [
 
 @app.get("/assets/{file_name:path}")
 async def serve_assets(file_name: str):
+    if (file_name.endswith(".js") or file_name == JS_FILENAME) and JS_CONTENT:
+        return Response(content=JS_CONTENT.encode("utf-8"), media_type="application/javascript")
+    elif (file_name.endswith(".css") or file_name == CSS_FILENAME) and CSS_CONTENT:
+        return Response(content=CSS_CONTENT.encode("utf-8"), media_type="text/css")
+
     rel_path = f"assets/{file_name}"
     for d in STATIC_DIRS:
         file_path = d / rel_path
         if file_path.exists() and file_path.is_file():
             content = file_path.read_bytes()
-            media_type, _ = mimetypes.guess_type(str(file_path))
             if file_name.endswith(".js"):
                 media_type = "application/javascript"
             elif file_name.endswith(".css"):
                 media_type = "text/css"
+            else:
+                media_type, _ = mimetypes.guess_type(str(file_path))
             return Response(content=content, media_type=media_type)
     return JSONResponse(status_code=404, content={"detail": f"Asset {file_name} not found"})
 
