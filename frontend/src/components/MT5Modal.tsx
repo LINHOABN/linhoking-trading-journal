@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Copy, Check, Key, RefreshCw, HelpCircle, Terminal } from 'lucide-react'
-import { rotateMt5Key, type Me } from '../lib/api'
+import { rotateMt5Key } from '../lib/api'
+import type { Me } from '../context/AuthContext'
 
 interface Props {
     user: Me | null
@@ -86,8 +87,8 @@ input string ApiKey     = "${user.mt5ApiKey}";
                     <button
                         onClick={() => setActiveTab('key')}
                         className={`pb-2 font-bold transition-all border-b-2 ${activeTab === 'key'
-                                ? 'border-signal-data text-signal-data'
-                                : 'border-transparent text-ink-500 hover:text-ink-900 dark:hover:text-paper-50'
+                            ? 'border-signal-data text-signal-data'
+                            : 'border-transparent text-ink-500 hover:text-ink-900 dark:hover:text-paper-50'
                             }`}
                     >
                         🔑 Ma Clé API & Serveur
@@ -95,8 +96,8 @@ input string ApiKey     = "${user.mt5ApiKey}";
                     <button
                         onClick={() => setActiveTab('guide')}
                         className={`pb-2 font-bold transition-all border-b-2 ${activeTab === 'guide'
-                                ? 'border-signal-data text-signal-data'
-                                : 'border-transparent text-ink-500 hover:text-ink-900 dark:hover:text-paper-50'
+                            ? 'border-signal-data text-signal-data'
+                            : 'border-transparent text-ink-500 hover:text-ink-900 dark:hover:text-paper-50'
                             }`}
                     >
                         📖 Guide de Connexion MT5

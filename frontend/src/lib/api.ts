@@ -72,7 +72,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export async function login(email: string, password: string): Promise<string> {
   // FastAPI's OAuth2PasswordRequestForm expects x-www-form-urlencoded, not JSON
   const body = new URLSearchParams({ username: email, password })
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${getApiUrl()}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
@@ -277,7 +277,7 @@ export async function uploadTradeScreenshot(tradeId: string, file: File): Promis
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch(`${API_URL}/trades/${tradeId}/screenshot`, {
+  const res = await fetch(`${getApiUrl()}/trades/${tradeId}/screenshot`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -456,4 +456,8 @@ export async function addDeposit(payload: { amount: number; label?: string; depo
 
 export async function deleteDeposit(depositId: string): Promise<void> {
   return request<void>(`/deposits/${depositId}`, { method: 'DELETE' })
+}
+
+export async function rotateMt5Key(): Promise<{ mt5_api_key: string }> {
+  return request<{ mt5_api_key: string }>('/mt5/rotate-key', { method: 'POST' })
 }

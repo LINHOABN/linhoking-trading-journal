@@ -10,11 +10,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "date-fns": "^3.6.0",
+    "linhoking-trading-journal-root": "file:..",
+    "lucide-react": "^0.383.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "recharts": "^2.12.7",
-    "lucide-react": "^0.383.0",
-    "date-fns": "^3.6.0"
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
