@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -35,8 +35,51 @@ app = FastAPI(
     version="0.2.0",
 )
 
+INDEX_HTML = """<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LINHOKING — Trading Journal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/index-B5Mr9YoW.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BazwQA1c.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>"""
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
+async def serve_index():
+    return HTMLResponse(content=INDEX_HTML)
+
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
+    path = request.url.path
+    if not any(
+        path.startswith(prefix)
+        for prefix in [
+            "/api",
+            "/auth",
+            "/trades",
+            "/tiers",
+            "/stats",
+            "/risk",
+            "/deposits",
+            "/mt5",
+            "/health",
+            "/assets",
+        ]
+    ):
+        return HTMLResponse(content=INDEX_HTML)
+
     return JSONResponse(
         status_code=404,
         content={
