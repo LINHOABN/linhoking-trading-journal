@@ -52,6 +52,18 @@ def _serve_file(rel_path: str):
         return Response(content=content, media_type=media_type)
     return None
 
+@app.get("/debug")
+async def debug(request: Request):
+    return JSONResponse({
+        "url": str(request.url),
+        "url_path": request.url.path,
+        "scope_path": request.scope.get("path"),
+        "static_dir": str(STATIC_DIR),
+        "static_dir_exists": STATIC_DIR.exists(),
+        "static_files": [str(p) for p in STATIC_DIR.rglob("*")] if STATIC_DIR.exists() else [],
+        "all_headers": dict(request.headers),
+    })
+
 @app.get("/assets/{file_name:path}")
 async def serve_assets(file_name: str):
     res = _serve_file(f"assets/{file_name}")
