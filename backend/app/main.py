@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -35,75 +35,12 @@ app = FastAPI(
     version="0.2.0",
 )
 
-from pathlib import Path
-import mimetypes
-from fastapi.responses import FileResponse
-
-ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "assets"
-if not ASSETS_DIR.exists():
-    ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "public" / "assets"
-
-INDEX_HTML = """<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LINHOKING — Trading Journal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <script type="module" crossorigin src="/assets/index-B5Mr9YoW.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BazwQA1c.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>"""
-
-@app.get("/assets/{file_name:path}")
-async def serve_asset_file(file_name: str):
-    file_path = ASSETS_DIR / file_name
-    if file_path.exists() and file_path.is_file():
-        media_type, _ = mimetypes.guess_type(str(file_path))
-        if file_name.endswith(".js"):
-            media_type = "application/javascript"
-        elif file_name.endswith(".css"):
-            media_type = "text/css"
-        return FileResponse(file_path, media_type=media_type)
-    return JSONResponse(status_code=404, content={"detail": f"Asset {file_name} not found"})
-
-@app.get("/", response_class=HTMLResponse)
-@app.get("/index.html", response_class=HTMLResponse)
-async def serve_index():
-    return HTMLResponse(content=INDEX_HTML)
-
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
-    path = request.scope.get("path") or request.url.path
-    if path in ("/api/main.py", "/api/index.py", "/api", "/") or not any(
-        path.startswith(prefix)
-        for prefix in [
-            "/api",
-            "/auth",
-            "/trades",
-            "/tiers",
-            "/stats",
-            "/risk",
-            "/deposits",
-            "/mt5",
-            "/health",
-            "/assets",
-        ]
-    ):
-        return HTMLResponse(content=INDEX_HTML)
-
     return JSONResponse(
         status_code=404,
         content={
-            "detail": "Not Found",
+            "detail": "API Endpoint Not Found",
             "requested_url": str(request.url),
             "requested_path": request.url.path,
             "scope_path": request.scope.get("path"),
@@ -126,8 +63,6 @@ async def vercel_route_fixer(request, call_next):
         forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-matched-path")
         if forwarded_uri and forwarded_uri != request.url.path:
             request.scope["path"] = forwarded_uri.split("?")[0]
-        elif request.url.path in ("/api/main.py", "/api/index.py", "/api"):
-            request.scope["path"] = "/"
     return await call_next(request)
 
 # Only mount uploads directory locally (Vercel has no persistent filesystem)
