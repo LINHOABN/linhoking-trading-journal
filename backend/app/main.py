@@ -35,7 +35,13 @@ STATIC_DIRS = [
     Path(__file__).resolve().parent.parent.parent / "frontend" / "dist",
 ]
 
-INDEX_HTML = """<!doctype html>
+CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
+INDEX_HTML = f"""<!doctype html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
@@ -47,8 +53,8 @@ INDEX_HTML = """<!doctype html>
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/index-B5Mr9YoW.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BazwQA1c.css">
+    <script type="module" crossorigin src="/assets/{JS_FILENAME}?v=0.2.1"></script>
+    <link rel="stylesheet" crossorigin href="/assets/{CSS_FILENAME}?v=0.2.1">
   </head>
   <body>
     <div id="root"></div>
@@ -58,23 +64,24 @@ INDEX_HTML = """<!doctype html>
 # ---- Asset Serving ----
 @app.get("/assets/{file_name:path}")
 async def serve_assets(file_name: str):
-    if (file_name.endswith(".js") or file_name == JS_FILENAME) and JS_CONTENT:
-        return Response(content=JS_CONTENT.encode("utf-8"), media_type="application/javascript")
-    elif (file_name.endswith(".css") or file_name == CSS_FILENAME) and CSS_CONTENT:
-        return Response(content=CSS_CONTENT.encode("utf-8"), media_type="text/css")
+    clean_name = file_name.split("?")[0]
+    if (clean_name.endswith(".js") or clean_name == JS_FILENAME) and JS_CONTENT:
+        return Response(content=JS_CONTENT.encode("utf-8"), media_type="application/javascript", headers=CACHE_HEADERS)
+    elif (clean_name.endswith(".css") or clean_name == CSS_FILENAME) and CSS_CONTENT:
+        return Response(content=CSS_CONTENT.encode("utf-8"), media_type="text/css", headers=CACHE_HEADERS)
 
-    rel_path = f"assets/{file_name}"
+    rel_path = f"assets/{clean_name}"
     for d in STATIC_DIRS:
         file_path = d / rel_path
         if file_path.exists() and file_path.is_file():
             content = file_path.read_bytes()
-            if file_name.endswith(".js"):
+            if clean_name.endswith(".js"):
                 media_type = "application/javascript"
-            elif file_name.endswith(".css"):
+            elif clean_name.endswith(".css"):
                 media_type = "text/css"
             else:
                 media_type, _ = mimetypes.guess_type(str(file_path))
-            return Response(content=content, media_type=media_type)
+            return Response(content=content, media_type=media_type, headers=CACHE_HEADERS)
     return JSONResponse(status_code=404, content={"detail": f"Asset {file_name} not found"})
 
 # ---- DB init (safe) ----
@@ -128,4 +135,4 @@ def debug(request: Request):
 # ---- SPA Catch-All Route ----
 @app.get("/{full_path:path}", response_class=HTMLResponse)
 def spa_catch_all(full_path: str = ""):
-    return HTMLResponse(content=INDEX_HTML)
+    return HTMLResponse(content=INDEX_HTML, headers=CACHE_HEADERS)
