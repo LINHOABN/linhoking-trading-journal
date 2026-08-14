@@ -17,6 +17,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def vercel_route_fixer(request, call_next):
+    if IS_VERCEL:
+        forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-matched-path")
+        if forwarded_uri:
+            cleaned_path = forwarded_uri.split("?")[0]
+            if cleaned_path not in ("/api/main.py", "/api/index.py", "/api"):
+                request.scope["path"] = cleaned_path
+            else:
+                request.scope["path"] = "/"
+        elif request.url.path in ("/api/main.py", "/api/index.py", "/api"):
+            request.scope["path"] = "/"
+    return await call_next(request)
+
 # ---- DB init (safe) ----
 try:
     from app.database import Base, engine, SessionLocal

@@ -4,11 +4,11 @@
     "outputDirectory": "frontend/dist",
     "rewrites": [
         {
-            "source": "/auth/:path*",
+            "source": "/auth",
             "destination": "/api/main.py"
         },
         {
-            "source": "/trades/:path*",
+            "source": "/auth/:path*",
             "destination": "/api/main.py"
         },
         {
@@ -16,7 +16,7 @@
             "destination": "/api/main.py"
         },
         {
-            "source": "/tiers/:path*",
+            "source": "/trades/:path*",
             "destination": "/api/main.py"
         },
         {
@@ -24,7 +24,19 @@
             "destination": "/api/main.py"
         },
         {
+            "source": "/tiers/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/stats",
+            "destination": "/api/main.py"
+        },
+        {
             "source": "/stats/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/risk",
             "destination": "/api/main.py"
         },
         {
@@ -32,7 +44,15 @@
             "destination": "/api/main.py"
         },
         {
+            "source": "/deposits",
+            "destination": "/api/main.py"
+        },
+        {
             "source": "/deposits/:path*",
+            "destination": "/api/main.py"
+        },
+        {
+            "source": "/mt5",
             "destination": "/api/main.py"
         },
         {
