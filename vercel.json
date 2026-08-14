@@ -1,6 +1,6 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../backend/app/static && cp -r dist/* ../backend/app/static/",
+    "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../api/static && cp -r dist/* ../api/static/",
     "rewrites": [
         {
             "source": "/(.*)",

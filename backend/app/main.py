@@ -37,20 +37,25 @@ app = FastAPI(
     version="0.2.0",
 )
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
+STATIC_DIRS = [
+    Path(__file__).resolve().parent.parent.parent / "api" / "static",
+    Path(__file__).resolve().parent / "static",
+    Path(__file__).resolve().parent.parent.parent / "frontend" / "dist",
+]
 
 def get_static_file(rel_path: str):
-    file_path = STATIC_DIR / rel_path
-    if file_path.exists() and file_path.is_file():
-        content = file_path.read_bytes()
-        media_type, _ = mimetypes.guess_type(str(file_path))
-        if rel_path.endswith(".js"):
-            media_type = "application/javascript"
-        elif rel_path.endswith(".css"):
-            media_type = "text/css"
-        elif rel_path.endswith(".html"):
-            media_type = "text/html; charset=utf-8"
-        return Response(content=content, media_type=media_type)
+    for d in STATIC_DIRS:
+        file_path = d / rel_path
+        if file_path.exists() and file_path.is_file():
+            content = file_path.read_bytes()
+            media_type, _ = mimetypes.guess_type(str(file_path))
+            if rel_path.endswith(".js"):
+                media_type = "application/javascript"
+            elif rel_path.endswith(".css"):
+                media_type = "text/css"
+            elif rel_path.endswith(".html"):
+                media_type = "text/html; charset=utf-8"
+            return Response(content=content, media_type=media_type)
     return None
 
 @app.get("/assets/{file_name:path}")
