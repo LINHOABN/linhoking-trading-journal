@@ -35,14 +35,32 @@ async def vercel_route_fixer(request, call_next):
             request.scope["path"] = "/"
     return await call_next(request)
 
-@app.get("/")
+from fastapi.responses import HTMLResponse
+
+INDEX_HTML = """<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LINHOKING — Trading Journal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/index-B5Mr9YoW.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BazwQA1c.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>"""
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
 def root():
-    return {
-        "status": "ok",
-        "app": "LINHOKING Trading Journal API",
-        "version": "0.2.0",
-        "env": "vercel" if IS_VERCEL else "local"
-    }
+    return HTMLResponse(content=INDEX_HTML)
 
 # ---- DB init (safe) ----
 try:
