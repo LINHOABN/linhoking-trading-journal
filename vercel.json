@@ -1,47 +1,10 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build",
-    "outputDirectory": "frontend/dist",
+    "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../backend/app/static && cp -r dist/* ../backend/app/static/",
     "rewrites": [
         {
-            "source": "/api/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/auth/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/trades/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/tiers/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/stats/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/risk/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/deposits/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/mt5/:path*",
-            "destination": "/api/main.py"
-        },
-        {
-            "source": "/health",
-            "destination": "/api/main.py"
-        },
-        {
             "source": "/(.*)",
-            "destination": "/index.html"
+            "destination": "/api/main.py"
         }
     ]
 }
