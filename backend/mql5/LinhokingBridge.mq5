@@ -17,8 +17,8 @@
 #property version   "1.20"
 #property strict
 
-input string ApiBaseUrl = "http://localhost:8000";      // Base URL de l'API FastAPI
-input string ApiKey     = "PASTE-YOUR-MT5-API-KEY-HERE"; // Clé API (header X-API-Key)
+input string ApiBaseUrl = "https://linhoking-trading-journal.vercel.app"; // Base URL de l'API FastAPI (Vercel Production)
+input string ApiKey     = "PASTE-YOUR-MT5-API-KEY-HERE";               // Clé API (header X-API-Key)
 input int    TimeoutMs  = 5000;
 
 //+------------------------------------------------------------------+
