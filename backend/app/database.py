@@ -18,6 +18,10 @@ class Base(DeclarativeBase):
 
 
 def get_db():
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
     db = SessionLocal()
     try:
         yield db
