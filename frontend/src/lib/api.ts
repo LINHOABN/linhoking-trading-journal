@@ -53,6 +53,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${getApiUrl()}${path}`, { ...options, headers })
 
   if (!res.ok) {
+    if (res.status === 401) {
+      clearToken()
+    }
     let detail = res.statusText
     try {
       const body = await res.json()

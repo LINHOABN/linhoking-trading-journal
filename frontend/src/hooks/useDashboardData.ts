@@ -31,6 +31,10 @@ export function useDashboardData(onRefreshUser?: () => void): DashboardData {
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
+    if (!api.getToken()) {
+      setLoading(false)
+      return
+    }
     try {
       const [tradesData, riskData, tierData, curveData, lotData, statsData, depositsData] = await Promise.all([
         api.getTrades(),
