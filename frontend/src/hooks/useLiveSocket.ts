@@ -15,6 +15,16 @@ export function useLiveSocket(enabled: boolean, onEvent: () => void) {
     let isCancelled = false
 
     function connect() {
+      // Serverless environments (Vercel) do not support persistent WebSocket handshakes.
+      // Use 5s HTTP polling seamlessly without logging WebSocket 403 errors.
+      const isServerlessHost = typeof window !== 'undefined' && (
+        window.location.hostname.includes('vercel.app') ||
+        (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
+      )
+      if (isServerlessHost) {
+        return
+      }
+
       const token = getToken()
       if (!token) {
         scheduleReconnect()

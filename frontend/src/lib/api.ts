@@ -1,6 +1,12 @@
 import type { Trade, Tier, CapitalPoint, LotStep, Direction, Emotion } from '../types'
 
-const API_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.DEV ? 'http://localhost:8000' : '')
+export function getApiUrl(): string {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '' // Use relative path on production host (Vercel)
+  }
+  return import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : (import.meta.env.DEV ? 'http://localhost:8000' : '')
+}
+
 const TOKEN_KEY = 'linhoking_token'
 
 export function getToken(): string | null {
@@ -17,9 +23,10 @@ export function clearToken() {
 
 export function wsUrl(): string {
   const token = getToken()
+  const apiUrl = getApiUrl()
   let base: string
-  if (API_URL) {
-    base = API_URL.replace(/^http/, 'ws')
+  if (apiUrl) {
+    base = apiUrl.replace(/^http/, 'ws')
   } else {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     base = `${proto}//${window.location.host}`
@@ -43,7 +50,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const res = await fetch(`${getApiUrl()}${path}`, { ...options, headers })
 
   if (!res.ok) {
     let detail = res.statusText
