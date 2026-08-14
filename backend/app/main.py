@@ -35,6 +35,14 @@ app = FastAPI(
     version="0.2.0",
 )
 
+from pathlib import Path
+import mimetypes
+from fastapi.responses import FileResponse
+
+ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "assets"
+if not ASSETS_DIR.exists():
+    ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "public" / "assets"
+
 INDEX_HTML = """<!doctype html>
 <html lang="fr">
   <head>
@@ -54,6 +62,18 @@ INDEX_HTML = """<!doctype html>
     <div id="root"></div>
   </body>
 </html>"""
+
+@app.get("/assets/{file_name:path}")
+async def serve_asset_file(file_name: str):
+    file_path = ASSETS_DIR / file_name
+    if file_path.exists() and file_path.is_file():
+        media_type, _ = mimetypes.guess_type(str(file_path))
+        if file_name.endswith(".js"):
+            media_type = "application/javascript"
+        elif file_name.endswith(".css"):
+            media_type = "text/css"
+        return FileResponse(file_path, media_type=media_type)
+    return JSONResponse(status_code=404, content={"detail": f"Asset {file_name} not found"})
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/index.html", response_class=HTMLResponse)
