@@ -62,8 +62,8 @@ async def serve_index():
 
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc: StarletteHTTPException):
-    path = request.url.path
-    if not any(
+    path = request.scope.get("path") or request.url.path
+    if path in ("/api/main.py", "/api/index.py", "/api", "/") or not any(
         path.startswith(prefix)
         for prefix in [
             "/api",
@@ -106,6 +106,8 @@ async def vercel_route_fixer(request, call_next):
         forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-matched-path")
         if forwarded_uri and forwarded_uri != request.url.path:
             request.scope["path"] = forwarded_uri.split("?")[0]
+        elif request.url.path in ("/api/main.py", "/api/index.py", "/api"):
+            request.scope["path"] = "/"
     return await call_next(request)
 
 # Only mount uploads directory locally (Vercel has no persistent filesystem)
