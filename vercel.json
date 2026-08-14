@@ -62,10 +62,6 @@
         {
             "source": "/health",
             "destination": "/api/main.py"
-        },
-        {
-            "source": "/((?!assets|.*\\..*).*)",
-            "destination": "/index.html"
         }
     ]
 }
