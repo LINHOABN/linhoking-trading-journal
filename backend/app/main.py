@@ -35,7 +35,31 @@ async def vercel_route_fixer(request, call_next):
             request.scope["path"] = "/"
     return await call_next(request)
 
-from fastapi.responses import HTMLResponse
+from pathlib import Path
+from fastapi import Response
+from fastapi.responses import HTMLResponse, JSONResponse
+import mimetypes
+
+STATIC_DIRS = [
+    Path(__file__).resolve().parent.parent.parent / "api" / "static",
+    Path(__file__).resolve().parent / "static",
+    Path(__file__).resolve().parent.parent.parent / "frontend" / "dist",
+]
+
+@app.get("/assets/{file_name:path}")
+async def serve_assets(file_name: str):
+    rel_path = f"assets/{file_name}"
+    for d in STATIC_DIRS:
+        file_path = d / rel_path
+        if file_path.exists() and file_path.is_file():
+            content = file_path.read_bytes()
+            media_type, _ = mimetypes.guess_type(str(file_path))
+            if file_name.endswith(".js"):
+                media_type = "application/javascript"
+            elif file_name.endswith(".css"):
+                media_type = "text/css"
+            return Response(content=content, media_type=media_type)
+    return JSONResponse(status_code=404, content={"detail": f"Asset {file_name} not found"})
 
 INDEX_HTML = """<!doctype html>
 <html lang="fr">
