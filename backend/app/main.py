@@ -20,17 +20,17 @@ app.add_middleware(
 @app.middleware("http")
 async def vercel_route_fixer(request, call_next):
     if IS_VERCEL:
+        query_path = request.query_params.get("path")
         forwarded_uri = request.headers.get("x-forwarded-uri")
         matched_path = request.headers.get("x-matched-path")
         
-        target_path = None
-        if forwarded_uri:
-            target_path = forwarded_uri.split("?")[0]
-        elif matched_path:
-            target_path = matched_path.split("?")[0]
-            
-        if target_path and target_path not in ("/api/main.py", "/api/index.py", "/api"):
-            request.scope["path"] = target_path
+        target = query_path or forwarded_uri or matched_path
+        if target:
+            cleaned = target.split("?")[0]
+            if cleaned not in ("/api/main.py", "/api/index.py", "/api"):
+                request.scope["path"] = cleaned
+            else:
+                request.scope["path"] = "/"
         elif request.url.path in ("/api/main.py", "/api/index.py", "/api"):
             request.scope["path"] = "/"
     return await call_next(request)

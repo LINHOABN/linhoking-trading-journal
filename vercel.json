@@ -5,67 +5,71 @@
     "rewrites": [
         {
             "source": "/assets/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/assets/:path*"
         },
         {
             "source": "/auth",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/auth"
         },
         {
             "source": "/auth/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/auth/:path*"
         },
         {
             "source": "/trades",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/trades"
         },
         {
             "source": "/trades/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/trades/:path*"
         },
         {
             "source": "/tiers",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/tiers"
         },
         {
             "source": "/tiers/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/tiers/:path*"
         },
         {
             "source": "/stats",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/stats"
         },
         {
             "source": "/stats/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/stats/:path*"
         },
         {
             "source": "/risk",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/risk"
         },
         {
             "source": "/risk/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/risk/:path*"
         },
         {
             "source": "/deposits",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/deposits"
         },
         {
             "source": "/deposits/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/deposits/:path*"
         },
         {
             "source": "/mt5",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/mt5"
         },
         {
             "source": "/mt5/:path*",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/mt5/:path*"
         },
         {
             "source": "/health",
-            "destination": "/api/main.py"
+            "destination": "/api/main.py?path=/health"
+        },
+        {
+            "source": "/((?!assets|.*\\..*).*)",
+            "destination": "/api/main.py?path=/"
         }
     ]
 }
