@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -8,6 +8,15 @@ app = FastAPI(
     title="LINHOKING Trading Journal API",
     version="0.2.0",
 )
+
+@app.get("/debug")
+def debug(request: Request):
+    return {
+        "url_path": request.url.path,
+        "scope_path": request.scope.get("path"),
+        "headers": dict(request.headers),
+        "query_params": dict(request.query_params)
+    }
 
 app.add_middleware(
     CORSMiddleware,

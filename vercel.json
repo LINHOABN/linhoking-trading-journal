@@ -4,6 +4,10 @@
     "outputDirectory": "frontend/dist",
     "rewrites": [
         {
+            "source": "/debug",
+            "destination": "/api/main.py?path=/debug"
+        },
+        {
             "source": "/assets/:path*",
             "destination": "/api/main.py?path=/assets/:path*"
         },
