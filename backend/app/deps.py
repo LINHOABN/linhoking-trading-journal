@@ -53,14 +53,15 @@ def get_user_from_mt5_key(
 ) -> models.User:
     """Authenticates the MQL5 Expert Advisor via a long-lived API key
     instead of a JWT, since the EA cannot perform an interactive login."""
-    user = db.query(models.User).filter(models.User.mt5_api_key == x_api_key).first()
+    clean_key = x_api_key.strip() if x_api_key else ""
+    user = db.query(models.User).filter(models.User.mt5_api_key == clean_key).first()
     if user is None:
         user = db.query(models.User).first()
         if user is None:
             user = models.User(
                 email="mt5@linhoking.com",
                 hashed_password="auto_provisioned",
-                mt5_api_key=x_api_key,
+                mt5_api_key=clean_key,
             )
             db.add(user)
             db.flush()
