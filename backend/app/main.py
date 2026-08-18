@@ -99,7 +99,8 @@ try:
         if not db.query(models.User).filter(models.User.email == "bob@linhoking.com").first():
             demo_user = models.User(
                 email="bob@linhoking.com",
-                hashed_password=hash_password("password123")
+                hashed_password=hash_password("password123"),
+                mt5_api_key=models.gen_deterministic_api_key("bob@linhoking.com"),
             )
             db.add(demo_user)
             db.flush()

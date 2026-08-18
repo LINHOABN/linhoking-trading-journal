@@ -9,6 +9,12 @@ def gen_uuid() -> str:
     return str(uuid.uuid4())
 
 
+def gen_deterministic_api_key(email: str) -> str:
+    if not email:
+        return str(uuid.uuid4())
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, f"linhoking-mt5-{email.lower().strip()}"))
+
+
 class User(Base):
     __tablename__ = "users"
 

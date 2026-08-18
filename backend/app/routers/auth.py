@@ -17,7 +17,11 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
         if existing:
             raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
 
-        user = models.User(email=payload.email, hashed_password=hash_password(payload.password))
+        user = models.User(
+            email=payload.email,
+            hashed_password=hash_password(payload.password),
+            mt5_api_key=models.gen_deterministic_api_key(payload.email),
+        )
         db.add(user)
         db.flush()  # get user.id before creating dependent rows
 
@@ -43,7 +47,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             # Auto-provision user on serverless instances if container DB is fresh
             user = models.User(
                 email=form_data.username,
-                hashed_password=hash_password(form_data.password)
+                hashed_password=hash_password(form_data.password),
+                mt5_api_key=models.gen_deterministic_api_key(form_data.username),
             )
             db.add(user)
             db.flush()

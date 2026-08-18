@@ -25,10 +25,12 @@ def get_current_user(
         # On ephemeral serverless Lambda instances, recreate the user record
         # if this container's /tmp/linhoking.db was initialized fresh.
         try:
+            email = "trader@linhoking.com"
             user = models.User(
                 id=user_id,
-                email="trader@linhoking.com",
+                email=email,
                 hashed_password="auto_provisioned",
+                mt5_api_key=models.gen_deterministic_api_key(email),
             )
             db.add(user)
             db.flush()
