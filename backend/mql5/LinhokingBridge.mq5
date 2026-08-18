@@ -18,7 +18,7 @@
 #property strict
 
 input string ApiBaseUrl = "https://linhoking-trading-journal.vercel.app"; // Base URL de l'API FastAPI (Vercel Production)
-input string ApiKey     = "PASTE-YOUR-MT5-API-KEY-HERE";               // Clé API (header X-API-Key)
+input string ApiKey     = "98bc2f55-868b-5d13-ba80-a9f9f6fbbb48";               // Clé API pré-configurée
 input int    TimeoutMs  = 5000;
 
 //+------------------------------------------------------------------+
