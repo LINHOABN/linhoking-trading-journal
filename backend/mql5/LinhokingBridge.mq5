@@ -227,7 +227,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 int OnInit()
 {
    Print("LinhokingBridge v1.20 initialisé — API: ", ApiBaseUrl);
-   EventSetTimer(60);   // envoie le solde toutes les 60 secondes
+   EventSetTimer(5);    // envoie le solde toutes les 5 secondes (temps réel)
    SendBalance();       // premier envoi immédiat des infos de compte et solde
    SyncHistory();       // synchronise tout l'historique passé de l'utilisateur
    return(INIT_SUCCEEDED);
