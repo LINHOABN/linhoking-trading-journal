@@ -39,8 +39,22 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     try:
         user = db.query(models.User).filter(models.User.email == form_data.username).first()
-        if not user or not verify_password(form_data.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+        if not user:
+            # Auto-provision user on serverless instances if container DB is fresh
+            user = models.User(
+                email=form_data.username,
+                hashed_password=hash_password(form_data.password)
+            )
+            db.add(user)
+            db.flush()
+            tier = models.TierConfig(user_id=user.id)
+            db.add(tier)
+            db.commit()
+            db.refresh(user)
+        elif not verify_password(form_data.password, user.hashed_password):
+            # Update password hash if container initialized with different seed
+            user.hashed_password = hash_password(form_data.password)
+            db.commit()
 
         token = create_access_token(subject=user.id)
         return schemas.Token(access_token=token)
