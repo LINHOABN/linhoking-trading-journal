@@ -98,19 +98,22 @@ function Dashboard() {
               <EmotionalGauge risk={riskState!} />
             </div>
 
-            <div className="mt-6 space-y-6">
-              <CapitalCurveChart data={capitalCurve.length > 0 ? capitalCurve : [
-                { date: 'Départ', capital: startingCapital || 200 },
-                { date: 'Aujourd\'hui', capital: mt5Balance || startingCapital || 200 }
-              ]} />
-              <RiskEvolutionChart data={capitalCurve.length > 0 ? capitalCurve : [
-                { date: 'Départ', capital: startingCapital || 200 },
-                { date: 'Aujourd\'hui', capital: mt5Balance || startingCapital || 200 }
-              ]} />
-              <LotHistoryChart data={lotHistory.length > 0 ? lotHistory : [
-                { date: 'Initial', lot: 0.01 }
-              ]} />
-            </div>
+            {(() => {
+              const liveCap = mt5Balance !== null ? mt5Balance : (riskState?.capital ?? 58.18)
+              const fallbackCurve = [
+                { date: 'Départ', capital: liveCap },
+                { date: 'Aujourd\'hui', capital: liveCap }
+              ]
+              return (
+                <div className="mt-6 space-y-6">
+                  <CapitalCurveChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
+                  <RiskEvolutionChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
+                  <LotHistoryChart data={lotHistory.length > 0 ? lotHistory : [
+                    { date: 'Initial', lot: riskState?.lot ?? 0.01 }
+                  ]} />
+                </div>
+              )
+            })()}
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">

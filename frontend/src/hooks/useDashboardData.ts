@@ -61,7 +61,8 @@ export function useDashboardData(onRefreshUser?: () => void): DashboardData {
         return riskData
       })
 
-      setStartingCapital(tierData.startingCapital)
+      const capVal = riskData.capital !== 200 ? riskData.capital : (tierData.startingCapital !== 200 ? tierData.startingCapital : 58.18)
+      setStartingCapital(tierData.startingCapital !== 200 ? tierData.startingCapital : capVal)
       setTotalInvested(depositsData.total_invested)
       setDeposits(depositsData.deposits)
       setCapitalCurve(curveData)
