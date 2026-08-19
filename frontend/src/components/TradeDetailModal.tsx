@@ -126,6 +126,13 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
 
     const stopRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
+            try {
+                if (mediaRecorderRef.current.state === 'recording') {
+                    mediaRecorderRef.current.requestData()
+                }
+            } catch {
+                /* ignore */
+            }
             mediaRecorderRef.current.stop()
             setIsRecording(false)
             if (timerIntervalRef.current) {
@@ -135,12 +142,16 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
     }
 
     const handleUploadVoiceBlob = async (blob: Blob) => {
+        if (!blob || blob.size === 0) {
+            alert("Enregistrement trop court ou audio vide. Veuillez parler au moins 1 seconde.")
+            return
+        }
         try {
             setVoiceUploading(true)
             const updated = await uploadTradeVoice(trade.id, blob)
             onTradeUpdated(updated)
-        } catch {
-            alert("Erreur lors de l'enregistrement de la note vocale")
+        } catch (e: any) {
+            alert(`Erreur lors de l'enregistrement de la note vocale: ${e?.message || e}`)
         } finally {
             setVoiceUploading(false)
         }
@@ -153,8 +164,8 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
             setVoiceUploading(true)
             const updated = await uploadTradeVoice(trade.id, file)
             onTradeUpdated(updated)
-        } catch {
-            alert("Erreur lors de l'envoi du fichier audio")
+        } catch (e: any) {
+            alert(`Erreur lors de l'envoi du fichier audio: ${e?.message || e}`)
         } finally {
             setVoiceUploading(false)
         }
@@ -166,8 +177,8 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
             setVoiceUploading(true)
             const updated = await deleteTradeVoice(trade.id)
             onTradeUpdated(updated)
-        } catch {
-            alert("Erreur lors de la suppression de la note vocale")
+        } catch (e: any) {
+            alert(`Erreur lors de la suppression de la note vocale: ${e?.message || e}`)
         } finally {
             setVoiceUploading(false)
         }
