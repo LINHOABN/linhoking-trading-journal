@@ -43,6 +43,10 @@ CACHE_HEADERS = {
     "Expires": "0",
 }
 
+ASSET_CACHE_HEADERS = {
+    "Cache-Control": "public, max-age=31536000, immutable",
+}
+
 INDEX_HTML = f"""<!doctype html>
 <html lang="fr">
   <head>
@@ -55,8 +59,8 @@ INDEX_HTML = f"""<!doctype html>
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/{JS_FILENAME}?v=0.5.3"></script>
-    <link rel="stylesheet" crossorigin href="/assets/{CSS_FILENAME}?v=0.5.3">
+    <script type="module" crossorigin src="/assets/{JS_FILENAME}?v=0.5.5"></script>
+    <link rel="stylesheet" crossorigin href="/assets/{CSS_FILENAME}?v=0.5.5">
   </head>
   <body>
     <div id="root"></div>
@@ -68,22 +72,21 @@ INDEX_HTML = f"""<!doctype html>
 async def serve_assets(file_name: str):
     clean_name = file_name.split("?")[0]
     if (clean_name.endswith(".js") or clean_name == JS_FILENAME) and JS_CONTENT:
-        return Response(content=JS_CONTENT.encode("utf-8"), media_type="application/javascript", headers=CACHE_HEADERS)
+        return Response(content=JS_CONTENT.encode("utf-8"), media_type="application/javascript", headers=ASSET_CACHE_HEADERS)
     elif (clean_name.endswith(".css") or clean_name == CSS_FILENAME) and CSS_CONTENT:
-        return Response(content=CSS_CONTENT.encode("utf-8"), media_type="text/css", headers=CACHE_HEADERS)
+        return Response(content=CSS_CONTENT.encode("utf-8"), media_type="text/css", headers=ASSET_CACHE_HEADERS)
 
     rel_path = f"assets/{clean_name}"
     for d in STATIC_DIRS:
         file_path = d / rel_path
         if file_path.exists() and file_path.is_file():
             content = file_path.read_bytes()
+            media_type, _ = mimetypes.guess_type(str(file_path))
             if clean_name.endswith(".js"):
                 media_type = "application/javascript"
             elif clean_name.endswith(".css"):
                 media_type = "text/css"
-            else:
-                media_type, _ = mimetypes.guess_type(str(file_path))
-            return Response(content=content, media_type=media_type, headers=CACHE_HEADERS)
+            return Response(content=content, media_type=media_type, headers=ASSET_CACHE_HEADERS)
     return JSONResponse(status_code=404, content={"detail": f"Asset {file_name} not found"})
 
 # ---- DB init (safe) ----

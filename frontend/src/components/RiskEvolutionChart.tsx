@@ -7,6 +7,19 @@ interface Props {
   data: CapitalPoint[]
 }
 
+function getRiskForCapital(cap: number): number {
+  if (cap == null || isNaN(cap) || cap < 100) return 5
+  if (cap < 200) return 10
+  if (cap < 350) return 15
+  if (cap < 500) return 20
+  if (cap < 650) return 25
+  if (cap < 800) return 30
+  if (cap < 950) return 35
+  if (cap < 1100) return 40
+  const extra = Math.floor((cap - 1100) / 150) + 1
+  return 40 + extra * 5
+}
+
 export default function RiskEvolutionChart({ data }: Props) {
   const { theme } = useTheme()
   const gridColor = theme === 'dark' ? '#262B33' : '#DDE1E6'
@@ -15,7 +28,7 @@ export default function RiskEvolutionChart({ data }: Props) {
   const chartData = data.map((d) => ({
     date: d.date,
     capital: d.capital,
-    risque: +(d.capital != null && !isNaN(d.capital) ? (d.capital * 0.04) : 0).toFixed(2),
+    risque: getRiskForCapital(d.capital),
   }))
 
   if (chartData.length === 1) {
