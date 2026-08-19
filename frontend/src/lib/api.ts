@@ -217,7 +217,7 @@ export async function getTrades(): Promise<Trade[]> {
 export interface DashboardSummaryResponse {
   trades: ApiTrade[]
   risk_state: RiskState | null
-  tier: { tier: any; startingCapital: number }
+  tier: ApiTier | null
   capital_curve: CapitalPoint[]
   lot_history: LotStep[]
   stats: StatsSummary | null
@@ -227,7 +227,7 @@ export interface DashboardSummaryResponse {
 export interface DashboardSummary {
   trades: Trade[]
   risk_state: RiskState | null
-  tier: { tier: any; startingCapital: number }
+  tier: { tier: Tier | null; startingCapital: number }
   capital_curve: CapitalPoint[]
   lot_history: LotStep[]
   stats: StatsSummary | null
@@ -236,10 +236,12 @@ export interface DashboardSummary {
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const data = await request<DashboardSummaryResponse>('/trades/dashboard_summary')
+  const tierObj = data.tier ? mapTier(data.tier) : null
+  const startingCap = data.tier?.starting_capital ?? 58.18
   return {
     trades: (data.trades || []).map(mapTrade),
     risk_state: data.risk_state || null,
-    tier: data.tier || { tier: null, startingCapital: 58.18 },
+    tier: { tier: tierObj, startingCapital: startingCap },
     capital_curve: data.capital_curve || [],
     lot_history: data.lot_history || [],
     stats: data.stats || null,
