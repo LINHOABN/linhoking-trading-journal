@@ -58,9 +58,6 @@ class TradeCreate(TradeBase):
 
 class TradeUpdate(BaseModel):
     emotion: Optional[str] = None
-
-class VoicePayload(BaseModel):
-    audio_base64: str
     strategy: Optional[str] = None
     mistake: Optional[str] = None
     note: Optional[str] = None
@@ -70,12 +67,28 @@ class VoicePayload(BaseModel):
     voice_url: Optional[str] = None
 
 
+class VoicePayload(BaseModel):
+    audio_base64: str
+
+
 class TradeOut(TradeBase):
     model_config = ConfigDict(from_attributes=True)
     id: str
     mt5_ticket: Optional[str] = None
     source: str
     created_at: datetime
+
+    @field_validator("voice_url", mode="after")
+    @classmethod
+    def transform_voice_url(cls, v: Optional[str], info) -> Optional[str]:
+        if not v:
+            return None
+        if v.startswith("/trades/") or v.startswith("http"):
+            return v
+        trade_id = info.data.get("id")
+        if trade_id:
+            return f"/trades/{trade_id}/audio"
+        return "/trades/audio"
 
 
 # ---------- MT5 bridge ----------

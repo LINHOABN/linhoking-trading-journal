@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 from datetime import date, time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -304,6 +304,29 @@ async def upload_trade_voice_base64(
         current_user.id, {"type": "trade_updated", "trade_id": trade.id}
     )
     return trade
+
+
+@router.get("/{trade_id}/audio")
+def get_trade_audio(
+    trade_id: str,
+    db: Session = Depends(get_db),
+):
+    trade = db.query(models.Trade).filter(models.Trade.id == trade_id).first()
+    if not trade or not trade.voice_url:
+        raise HTTPException(status_code=404, detail="Note vocale introuvable")
+
+    voice_data = trade.voice_url
+    if voice_data.startswith("data:"):
+        import base64
+        try:
+            header, b64_str = voice_data.split(";base64,", 1)
+            media_type = header.replace("data:", "") or "audio/webm"
+            audio_bytes = base64.b64decode(b64_str)
+            return Response(content=audio_bytes, media_type=media_type)
+        except Exception:
+            raise HTTPException(status_code=500, detail="Erreur de décodage audio")
+
+    return Response(content=b"", status_code=307, headers={"Location": voice_data})
 
 
 @router.delete("/{trade_id}/voice", response_model=schemas.TradeOut)
