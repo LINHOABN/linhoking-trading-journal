@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import type { Trade } from '../types'
 import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice, deleteTrade, getApiUrl } from '../lib/api'
-import { safeFixed } from '../lib/formatters'
+import { safeFixed, getTradeOutcomeBadge } from '../lib/formatters'
 
 interface Props {
     trade: Trade
@@ -393,6 +393,16 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated, onTra
                         {trade.session && (
                             <span className={`px-2 py-0.5 border font-mono text-[10px] uppercase font-semibold ${sessionStyle}`}>
                                 Session {trade.session}
+                            </span>
+                        )}
+                        {getTradeOutcomeBadge(trade).hit === 'TP' && (
+                            <span className="px-2.5 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                🎯 TP Touché
+                            </span>
+                        )}
+                        {getTradeOutcomeBadge(trade).hit === 'SL' && (
+                            <span className="px-2.5 py-0.5 rounded font-mono text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                🛑 SL Touché
                             </span>
                         )}
                     </div>

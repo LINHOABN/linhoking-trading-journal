@@ -120,7 +120,7 @@ function Dashboard() {
           return (
             <div className="mt-6 space-y-6">
               <CapitalCurveChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
-              <RiskEvolutionChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
+              <RiskEvolutionChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} trades={trades} />
               <LotHistoryChart data={lotHistory.length > 0 ? lotHistory : [
                 { date: 'Initial', lot: fallbackRisk.lot }
               ]} />

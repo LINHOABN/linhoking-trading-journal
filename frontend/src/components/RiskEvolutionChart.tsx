@@ -1,10 +1,11 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
-import type { CapitalPoint } from '../types'
+import type { CapitalPoint, Trade } from '../types'
 import { useTheme } from '../context/ThemeContext'
-import { formatShortDate, formatFullDate, safeFixed } from '../lib/formatters'
+import { formatShortDate, formatFullDate, safeFixed, calculateTradeRiskUSD, getTradeOutcomeBadge } from '../lib/formatters'
 
 interface Props {
-  data: CapitalPoint[]
+  data?: CapitalPoint[]
+  trades?: Trade[]
 }
 
 function getRiskForCapital(cap: number): number {
@@ -20,16 +21,33 @@ function getRiskForCapital(cap: number): number {
   return 40 + extra * 5
 }
 
-export default function RiskEvolutionChart({ data }: Props) {
+export default function RiskEvolutionChart({ data, trades }: Props) {
   const { theme } = useTheme()
   const gridColor = theme === 'dark' ? '#262B33' : '#DDE1E6'
   const textColor = theme === 'dark' ? '#8B92A0' : '#5B6470'
 
-  const chartData = data.map((d) => ({
-    date: d.date,
-    capital: d.capital,
-    risque: getRiskForCapital(d.capital),
-  }))
+  let chartData: Array<{ date: string; capital: number; risque: number; label?: string }> = []
+
+  if (trades && trades.length > 0) {
+    const sorted = [...trades].sort((a, b) => (a.date + (a.openTime || '')).localeCompare(b.date + (b.openTime || '')))
+    chartData = sorted.map((t, i) => {
+      const risk = calculateTradeRiskUSD(t)
+      const badge = getTradeOutcomeBadge(t)
+      const outcomeText = badge.label ? ` (${badge.label})` : (t.pnl >= 0 ? ' (Gagné)' : ' (Perdu)')
+      return {
+        date: t.date ? `${formatShortDate(t.date)} ${t.openTime?.slice(0, 5) || ''}`.trim() : `Trade #${i + 1}`,
+        capital: t.pnl,
+        risque: risk,
+        label: `${t.symbol} ${t.direction} ${t.volume} lot${outcomeText}`,
+      }
+    })
+  } else if (data && data.length > 0) {
+    chartData = data.map((d) => ({
+      date: d.date,
+      capital: d.capital,
+      risque: getRiskForCapital(d.capital),
+    }))
+  }
 
   if (chartData.length === 1) {
     chartData.unshift({
