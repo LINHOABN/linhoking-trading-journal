@@ -45,8 +45,8 @@ def list_trades(
         .all()
     )
     
-    # Auto-seed historical trades if user has fewer than 60 trades
-    if len(trades) < 50:
+    # Auto-seed historical trades if user has 0 trades
+    if len(trades) == 0:
         candidate_paths = [
             Path(__file__).parent.parent / "seed_trades.json",
             Path(__file__).parent.parent.parent / "backend" / "app" / "seed_trades.json",
@@ -59,19 +59,15 @@ def list_trades(
                 with open(seed_file, "r", encoding="utf-8") as sf:
                     raw_trades = json.load(sf)
                 
-                # Check global tickets to avoid unique constraint collisions on mt5_ticket
-                global_tickets = {
-                    t[0] for t in db.query(models.Trade.mt5_ticket).filter(models.Trade.mt5_ticket.isnot(None)).all()
-                }
-                
-                for tr in raw_trades:
-                    ticket = tr.get("mt5_ticket")
-                    if ticket and str(ticket) in global_tickets:
-                        ticket = f"SEED-{current_user.id[:4]}-{ticket}"
+                objects = []
+                user_prefix = current_user.id[:6]
+                for idx, tr in enumerate(raw_trades):
                     t_d = date.fromisoformat(tr["trade_date"])
                     o_t = time.fromisoformat(tr["open_time"])
                     c_t = time.fromisoformat(tr["close_time"])
-                    db.add(
+                    orig_ticket = tr.get("mt5_ticket") or f"100{idx}"
+                    unique_ticket = f"SEED-{user_prefix}-{idx}-{orig_ticket}"
+                    objects.append(
                         models.Trade(
                             user_id=current_user.id,
                             trade_date=t_d,
@@ -86,10 +82,11 @@ def list_trades(
                             take_profit=tr.get("take_profit", 0.0),
                             pnl=tr.get("pnl", 0.0),
                             session=tr.get("session"),
-                            mt5_ticket=str(ticket) if ticket else None,
+                            mt5_ticket=unique_ticket,
                             source=tr.get("source", "mt5"),
                         )
                     )
+                db.bulk_save_objects(objects)
                 db.commit()
                 trades = (
                     db.query(models.Trade)
