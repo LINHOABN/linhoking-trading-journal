@@ -41,7 +41,8 @@ def get_dashboard_summary(
     from app.routers.stats import get_stats_summary
     from app.routers.deposits import get_deposits
 
-    trades_list = list_trades(limit=1000, current_user=current_user, db=db)
+    raw_trades = list_trades(limit=1000, current_user=current_user, db=db)
+    trades_list = [schemas.TradeOut.model_validate(t) for t in raw_trades]
     risk_state = get_risk_state(current_user=current_user, db=db)
     tier_data = get_tier(current_user=current_user, db=db)
     curve_data = get_capital_curve(current_user=current_user, db=db)
