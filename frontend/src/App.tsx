@@ -67,17 +67,38 @@ function Dashboard() {
     )
   }
 
-  const hasData = riskState !== null && stats !== null
+  const fallbackRisk = riskState ?? {
+    capital: mt5Balance ?? 58.18,
+    niveau: 1,
+    lot: 0.01,
+    risque: 1,
+    objectif: 70,
+    reste: 11.82,
+    progression: 30,
+    pertes_restantes: 3,
+    etat: 'vert',
+  }
+
+  const fallbackStats = stats ?? {
+    winRate: 0,
+    totalTrades: 0,
+    avgWin: 0,
+    avgLoss: 0,
+    bestDay: null,
+    bestDayPnl: null,
+    worstDay: null,
+    worstDayPnl: null,
+    bestHour: null,
+  }
 
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900 transition-colors dark:bg-graphite-900 dark:text-paper-50">
       <Header liveConnected={liveConnected} onOpenMt5Modal={() => setIsMt5ModalOpen(true)} />
 
       <main className="mx-auto max-w-[1200px] px-6 py-8">
-        {/* Capital banner — always visible when tier or mt5Balance is available */}
         <CapitalHero
           curve={capitalCurve}
-          startingCapital={startingCapital || 200}
+          startingCapital={startingCapital || 58.18}
           totalInvested={totalInvested}
           deposits={deposits}
           mt5Balance={mt5Balance}
@@ -85,48 +106,38 @@ function Dashboard() {
           onDepositsUpdated={handleRefetch}
         />
 
-        {!hasData ? (
-          <div className="border border-graphite-700 p-10 text-center mt-4">
-            <p className="font-mono text-[12px] text-ink-500 dark:text-ink-300">
-              Chargement de la configuration…
-            </p>
+        <div className="mt-4 space-y-4">
+          <TierLadder risk={fallbackRisk} />
+          <EmotionalGauge risk={fallbackRisk} />
+        </div>
+
+        {(() => {
+          const liveCap = mt5Balance !== null ? mt5Balance : fallbackRisk.capital
+          const fallbackCurve = [
+            { date: 'Départ', capital: liveCap },
+            { date: 'Aujourd\'hui', capital: liveCap }
+          ]
+          return (
+            <div className="mt-6 space-y-6">
+              <CapitalCurveChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
+              <RiskEvolutionChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
+              <LotHistoryChart data={lotHistory.length > 0 ? lotHistory : [
+                { date: 'Initial', lot: fallbackRisk.lot }
+              ]} />
+            </div>
+          )
+        })()}
+
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <TradingCalendar trades={trades} onTradeUpdated={handleRefetch} />
           </div>
-        ) : (
-          <>
-            <div className="mt-4 space-y-4">
-              <TierLadder risk={riskState!} />
-              <EmotionalGauge risk={riskState!} />
-            </div>
+          <StatsPanel stats={fallbackStats} />
+        </div>
 
-            {(() => {
-              const liveCap = mt5Balance !== null ? mt5Balance : (riskState?.capital ?? 58.18)
-              const fallbackCurve = [
-                { date: 'Départ', capital: liveCap },
-                { date: 'Aujourd\'hui', capital: liveCap }
-              ]
-              return (
-                <div className="mt-6 space-y-6">
-                  <CapitalCurveChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
-                  <RiskEvolutionChart data={capitalCurve.length > 0 ? capitalCurve : fallbackCurve} />
-                  <LotHistoryChart data={lotHistory.length > 0 ? lotHistory : [
-                    { date: 'Initial', lot: riskState?.lot ?? 0.01 }
-                  ]} />
-                </div>
-              )
-            })()}
-
-            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <TradingCalendar trades={trades} onTradeUpdated={handleRefetch} />
-              </div>
-              <StatsPanel stats={stats!} />
-            </div>
-
-            <div className="mt-4">
-              <TradeJournal trades={trades} onTradeUpdated={handleRefetch} />
-            </div>
-          </>
-        )}
+        <div className="mt-4">
+          <TradeJournal trades={trades} onTradeUpdated={handleRefetch} />
+        </div>
 
         <footer className="mt-8 border-t border-graphite-700 pt-4 pb-2 text-center font-mono text-[10px] uppercase tracking-widest2 text-ink-500 dark:text-ink-300">
           LINHOKING · Session XAU/USD intraday
