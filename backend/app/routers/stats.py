@@ -85,36 +85,22 @@ def capital_curve(
 def lot_history(
     current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Returns dates on which the active lot size changed, based on capital thresholds."""
-    from app.tier_engine import LOT_LADDER, _tier_for_capital
-
-    tier = db.query(models.TierConfig).filter(
-        models.TierConfig.user_id == current_user.id
-    ).first()
-    starting_capital = tier.starting_capital if tier else 200.0
-
+    """Returns the actual lot volume used for every trade across history."""
     trades = (
         db.query(models.Trade)
         .filter(models.Trade.user_id == current_user.id)
-        .order_by(asc(models.Trade.trade_date), asc(models.Trade.close_time))
+        .order_by(asc(models.Trade.trade_date), asc(models.Trade.open_time))
         .all()
     )
 
     if not trades:
         return []
 
-    daily_pnl: dict[str, float] = defaultdict(float)
-    for t in trades:
-        daily_pnl[t.trade_date.isoformat()] += t.pnl
-
     points = []
-    capital = starting_capital
-    last_lot = None
-    for day in sorted(daily_pnl.keys()):
-        capital = round(capital + daily_pnl[day], 2)
-        _, lot, _ = _tier_for_capital(capital)
-        if lot != last_lot:
-            points.append(schemas.LotPoint(date=day, lot=lot))
-            last_lot = lot
+    for t in trades:
+        points.append(schemas.LotPoint(
+            date=t.trade_date.isoformat(),
+            lot=float(t.volume) if t.volume is not None else 0.01
+        ))
 
     return points
