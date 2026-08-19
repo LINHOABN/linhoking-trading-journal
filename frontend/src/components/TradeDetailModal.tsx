@@ -12,9 +12,15 @@ import {
     ChevronLeft,
     ChevronRight,
     Maximize2,
+    Mic,
+    Square,
+    Play,
+    Pause,
+    Radio,
+    Volume2,
 } from 'lucide-react'
 import type { Trade } from '../types'
-import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot } from '../lib/api'
+import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice } from '../lib/api'
 
 interface Props {
     trade: Trade
@@ -62,6 +68,105 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
     const [mistake, setMistake] = useState(trade.mistake || '')
     const [emotion, setEmotion] = useState(trade.emotion || '')
     const [confluences, setConfluences] = useState<string[]>(trade.confluences || [])
+
+    // Voice Recording State
+    const [isRecording, setIsRecording] = useState(false)
+    const [recordingTime, setRecordingTime] = useState(0)
+    const [voiceUploading, setVoiceUploading] = useState(false)
+    const [isPlaying, setIsPlaying] = useState(false)
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+    const audioChunksRef = useRef<Blob[]>([])
+    const timerIntervalRef = useRef<any>(null)
+    const audioInputRef = useRef<HTMLInputElement>(null)
+    const audioPlayerRef = useRef<HTMLAudioElement>(null)
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            const mediaRecorder = new MediaRecorder(stream)
+            mediaRecorderRef.current = mediaRecorder
+            audioChunksRef.current = []
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data)
+                }
+            }
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+                if (audioBlob.size > 0) {
+                    await handleUploadVoiceBlob(audioBlob)
+                }
+                stream.getTracks().forEach((track) => track.stop())
+            }
+
+            mediaRecorder.start(200)
+            setIsRecording(true)
+            setRecordingTime(0)
+
+            timerIntervalRef.current = setInterval(() => {
+                setRecordingTime((prev) => prev + 1)
+            }, 1000)
+        } catch {
+            alert("Impossible d'accéder au microphone. Vérifiez les autorisations de votre navigateur.")
+        }
+    }
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop()
+            setIsRecording(false)
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current)
+            }
+        }
+    }
+
+    const handleUploadVoiceBlob = async (blob: Blob) => {
+        try {
+            setVoiceUploading(true)
+            const updated = await uploadTradeVoice(trade.id, blob)
+            onTradeUpdated(updated)
+        } catch {
+            alert("Erreur lors de l'enregistrement de la note vocale")
+        } finally {
+            setVoiceUploading(false)
+        }
+    }
+
+    const handleAudioFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        try {
+            setVoiceUploading(true)
+            const updated = await uploadTradeVoice(trade.id, file)
+            onTradeUpdated(updated)
+        } catch {
+            alert("Erreur lors de l'envoi du fichier audio")
+        } finally {
+            setVoiceUploading(false)
+        }
+    }
+
+    const handleDeleteVoice = async () => {
+        if (!confirm("Voulez-vous supprimer cette note vocale ?")) return
+        try {
+            setVoiceUploading(true)
+            const updated = await deleteTradeVoice(trade.id)
+            onTradeUpdated(updated)
+        } catch {
+            alert("Erreur lors de la suppression de la note vocale")
+        } finally {
+            setVoiceUploading(false)
+        }
+    }
+
+    const formatSeconds = (sec: number) => {
+        const m = Math.floor(sec / 60)
+        const s = sec % 60
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    }
 
     // Options list state (defaults + custom added by user)
     const [confluenceOptions, setConfluenceOptions] = useState<string[]>(() => {
@@ -494,6 +599,89 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
                                         className="w-full bg-paper-50 dark:bg-graphite-900 border border-graphite-700 px-2 py-1 font-mono text-[11px] text-ink-900 dark:text-paper-50 focus:outline-none"
                                     />
                                 </div>
+                            </div>
+
+                            {/* VOICE NOTE SECTION */}
+                            <div className="border border-graphite-700 p-3 bg-paper-100 dark:bg-graphite-800/80 rounded space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-mono text-[10px] uppercase tracking-wider text-signal-data font-semibold flex items-center gap-1.5">
+                                        <Mic size={13} /> Note Vocale / Journal Audio
+                                    </span>
+                                    <input
+                                        type="file"
+                                        ref={audioInputRef}
+                                        onChange={handleAudioFileChange}
+                                        accept="audio/*"
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                {trade.voiceUrl ? (
+                                    <div className="flex items-center gap-3 border border-graphite-700 p-2.5 bg-paper-50 dark:bg-graphite-900 rounded">
+                                        <audio
+                                            ref={audioPlayerRef}
+                                            src={trade.voiceUrl}
+                                            controls
+                                            className="w-full h-8 focus:outline-none"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleDeleteVoice}
+                                            disabled={voiceUploading}
+                                            className="p-1.5 text-signal-loss hover:bg-signal-loss/10 rounded transition-colors"
+                                            title="Supprimer la note vocale"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border border-dashed border-graphite-700 p-3 bg-paper-50/50 dark:bg-graphite-900/50 rounded">
+                                        {isRecording ? (
+                                            <div className="flex items-center justify-between w-full">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="relative flex h-3 w-3">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-signal-loss opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-signal-loss"></span>
+                                                    </span>
+                                                    <span className="font-mono text-[12px] font-bold text-signal-loss animate-pulse">
+                                                        Enregistrement... {formatSeconds(recordingTime)}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={stopRecording}
+                                                    className="flex items-center gap-1.5 bg-signal-loss text-white font-mono text-[11px] px-3 py-1 font-semibold rounded hover:bg-signal-loss/90 transition-colors"
+                                                >
+                                                    <Square size={12} fill="white" /> Terminer & Sauvegarder
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="text-[11px] font-mono text-ink-500 dark:text-ink-300">
+                                                    {voiceUploading ? 'Téléchargement audio…' : 'Aucune note vocale enregistrée'}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={startRecording}
+                                                        disabled={voiceUploading}
+                                                        className="flex items-center gap-1.5 bg-signal-data text-white font-mono text-[11px] px-3 py-1 font-semibold rounded hover:bg-signal-data/90 transition-colors"
+                                                    >
+                                                        <Mic size={13} /> Record Micro
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => audioInputRef.current?.click()}
+                                                        disabled={voiceUploading}
+                                                        className="flex items-center gap-1.5 border border-graphite-600 text-ink-900 dark:text-paper-50 font-mono text-[11px] px-2.5 py-1 rounded hover:bg-paper-100 dark:hover:bg-graphite-800 transition-colors"
+                                                    >
+                                                        <Upload size={12} /> Fichier audio
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

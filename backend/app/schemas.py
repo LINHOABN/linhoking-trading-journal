@@ -49,6 +49,7 @@ class TradeBase(BaseModel):
     session: Optional[str] = None
     confluences: Optional[str] = None
     screenshot_url: Optional[str] = None
+    voice_url: Optional[str] = None
 
 
 class TradeCreate(TradeBase):
@@ -63,6 +64,7 @@ class TradeUpdate(BaseModel):
     session: Optional[str] = None
     confluences: Optional[str] = None
     screenshot_url: Optional[str] = None
+    voice_url: Optional[str] = None
 
 
 class TradeOut(TradeBase):

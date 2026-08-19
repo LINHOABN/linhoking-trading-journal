@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Filter, Image as ImageIcon, ExternalLink, Tag, ArrowUpDown, Calendar, X, RotateCcw, TrendingUp, TrendingDown } from 'lucide-react'
+import { Search, Filter, Image as ImageIcon, ExternalLink, Tag, ArrowUpDown, Calendar, X, RotateCcw, TrendingUp, TrendingDown, Mic } from 'lucide-react'
 import type { Trade } from '../types'
 import TradeDetailModal from './TradeDetailModal'
 
@@ -393,6 +393,13 @@ function TradeCard({ trade, onOpenModal }: { trade: Trade; onOpenModal: () => vo
                 <span className="flex items-center gap-1 text-signal-data/80">
                   <ImageIcon size={11} />
                   {photoCount} photo{photoCount > 1 ? 's' : ''}
+                </span>
+              )}
+
+              {trade.voiceUrl && (
+                <span className="flex items-center gap-1 text-purple-400 font-semibold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">
+                  <Mic size={11} />
+                  Note vocale
                 </span>
               )}
 

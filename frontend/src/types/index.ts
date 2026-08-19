@@ -23,6 +23,7 @@ export interface Trade {
   confluences?: string[]
   screenshotUrl: string | null
   screenshots?: string[]
+  voiceUrl?: string | null
 }
 
 export interface CapitalPoint {

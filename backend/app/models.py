@@ -61,6 +61,7 @@ class Trade(Base):
     session: Mapped[str | None] = mapped_column(String, nullable=True)
     confluences: Mapped[str | None] = mapped_column(String, nullable=True)  # JSON formatted string
     screenshot_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    voice_url: Mapped[str | None] = mapped_column(String, nullable=True)  # Audio recording URL / Data URL
 
     # Set when the trade was pushed automatically by the MQL5 bridge
     mt5_ticket: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)

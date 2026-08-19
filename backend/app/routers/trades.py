@@ -235,6 +235,60 @@ async def delete_trade_screenshot(
     return trade
 
 
+@router.post("/{trade_id}/voice", response_model=schemas.TradeOut)
+async def upload_trade_voice(
+    trade_id: str,
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    trade = (
+        db.query(models.Trade)
+        .filter(models.Trade.id == trade_id, models.Trade.user_id == current_user.id)
+        .first()
+    )
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade introuvable")
+
+    # Read binary content and encode as base64 Data URL so it is stored directly in Neon PostgreSQL
+    import base64
+    content = await file.read()
+    content_type = file.content_type or "audio/webm"
+    b64 = base64.b64encode(content).decode("utf-8")
+    voice_data_url = f"data:{content_type};base64,{b64}"
+
+    trade.voice_url = voice_data_url
+    db.commit()
+    db.refresh(trade)
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_updated", "trade_id": trade.id}
+    )
+    return trade
+
+
+@router.delete("/{trade_id}/voice", response_model=schemas.TradeOut)
+async def delete_trade_voice(
+    trade_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    trade = (
+        db.query(models.Trade)
+        .filter(models.Trade.id == trade_id, models.Trade.user_id == current_user.id)
+        .first()
+    )
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade introuvable")
+
+    trade.voice_url = None
+    db.commit()
+    db.refresh(trade)
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_updated", "trade_id": trade.id}
+    )
+    return trade
+
+
 @router.delete("/{trade_id}", status_code=204)
 async def delete_trade(
     trade_id: str,
@@ -253,3 +307,4 @@ async def delete_trade(
     await manager.send_to_user(
         current_user.id, {"type": "trade_deleted", "trade_id": trade_id}
     )
+

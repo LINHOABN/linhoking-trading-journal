@@ -22,7 +22,15 @@ async def receive_closed_trade(
 
     existing = db.query(models.Trade).filter(models.Trade.mt5_ticket == payload.ticket).first()
     if existing:
-        # Idempotent: return existing trade if already synced (useful during history import)
+        # Update trade details with closing figures (exit_price, pnl, close_time)
+        existing.exit_price = payload.exit_price
+        existing.pnl = payload.pnl
+        existing.stop_loss = payload.stop_loss
+        existing.take_profit = payload.take_profit
+        existing.close_time = payload.close_time.time()
+        existing.trade_date = payload.close_time.date()
+        db.commit()
+        db.refresh(existing)
         return existing
 
     trade = models.Trade(

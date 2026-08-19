@@ -151,6 +151,7 @@ interface ApiTrade {
   session: string | null
   confluences: string | null
   screenshot_url: string | null
+  voice_url: string | null
   mt5_ticket: string | null
   source: string
 }
@@ -200,6 +201,7 @@ function mapTrade(t: ApiTrade): Trade {
     confluences: parsedConfluences,
     screenshotUrl: parsedScreenshots.length > 0 ? parsedScreenshots[0] : null,
     screenshots: parsedScreenshots,
+    voiceUrl: t.voice_url ?? null,
   }
 }
 
@@ -297,6 +299,33 @@ export async function uploadTradeScreenshot(tradeId: string, file: File): Promis
 
 export async function deleteTradeScreenshot(tradeId: string, url: string): Promise<Trade> {
   const data = await request<ApiTrade>(`/trades/${tradeId}/screenshot?url=${encodeURIComponent(url)}`, {
+    method: 'DELETE',
+  })
+  return mapTrade(data)
+}
+
+export async function uploadTradeVoice(tradeId: string, fileOrBlob: Blob): Promise<Trade> {
+  const token = getToken()
+  const formData = new FormData()
+  formData.append('file', fileOrBlob, 'voice_note.webm')
+
+  const res = await fetch(`${getApiUrl()}/trades/${tradeId}/voice`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    throw new Error("Erreur lors de l'envoi de la note vocale")
+  }
+  const data: ApiTrade = await res.json()
+  return mapTrade(data)
+}
+
+export async function deleteTradeVoice(tradeId: string): Promise<Trade> {
+  const data = await request<ApiTrade>(`/trades/${tradeId}/voice`, {
     method: 'DELETE',
   })
   return mapTrade(data)
