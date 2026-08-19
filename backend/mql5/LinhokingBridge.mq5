@@ -115,8 +115,9 @@ void SendBalance()
 //+------------------------------------------------------------------+
 void SyncHistory()
 {
-   Print("LinhokingBridge: Analyse de l'historique des trades MT5...");
-   if(!HistorySelect(0, TimeCurrent()))
+   Print("LinhokingBridge: Analyse de l'historique complet des trades MT5...");
+   datetime fromDate = 0; // Epoch (1970) -> sélectionne 100% de l'historique du compte
+   if(!HistorySelect(fromDate, TimeCurrent() + 86400))
    {
       Print("LinhokingBridge: impossible de charger l'historique MT5.");
       return;
@@ -130,8 +131,12 @@ void SyncHistory()
       ulong dealTicket = HistoryDealGetTicket(i);
       if(dealTicket <= 0) continue;
 
+      long dealType = HistoryDealGetInteger(dealTicket, DEAL_TYPE);
+      // Ignorer les dépôts/retraits/crédits, conserver uniquement BUY et SELL
+      if(dealType != DEAL_TYPE_BUY && dealType != DEAL_TYPE_SELL) continue;
+
       long entryType = HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
-      if(entryType != DEAL_ENTRY_OUT) continue; // Seuls les deals de sortie nous intéressent
+      if(entryType != DEAL_ENTRY_OUT && entryType != DEAL_ENTRY_INOUT) continue; // Seuls les deals de sortie nous intéressent
 
       ulong positionId = HistoryDealGetInteger(dealTicket, DEAL_POSITION_ID);
       string symbol    = HistoryDealGetString(dealTicket, DEAL_SYMBOL);
@@ -141,10 +146,9 @@ void SyncHistory()
                         + HistoryDealGetDouble(dealTicket, DEAL_SWAP)
                         + HistoryDealGetDouble(dealTicket, DEAL_COMMISSION);
       datetime closeTime = (datetime)HistoryDealGetInteger(dealTicket, DEAL_TIME);
-      long dealDirection = HistoryDealGetInteger(dealTicket, DEAL_TYPE);
-      string direction   = (dealDirection == DEAL_TYPE_SELL) ? "BUY" : "SELL";
+      string direction   = (dealType == DEAL_TYPE_SELL) ? "BUY" : "SELL";
 
-      double entryPrice = 0, sl = 0, tp = 0;
+      double entryPrice = exitPrice, sl = 0, tp = 0;
       datetime openTime = closeTime;
 
       // Chercher le deal d'entrée correspondant
@@ -167,7 +171,7 @@ void SyncHistory()
       }
    }
 
-   Print("LinhokingBridge: Historique MT5 synchronisé (", syncedCount, " trades traités).");
+   Print("LinhokingBridge: Historique MT5 synchronisé (", syncedCount, " trades traités sur ", totalDeals, " deals).");
 }
 
 //+------------------------------------------------------------------+
@@ -177,16 +181,13 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
                          const MqlTradeRequest &request,
                          const MqlTradeResult &result)
 {
-   if(trans.type != TRADE_TRANSACTION_DEAL_ADD)
-      return;
+   if(trans.type != TRADE_TRANSACTION_DEAL_ADD) return;
 
    ulong dealTicket = trans.deal;
-   if(!HistoryDealSelect(dealTicket))
-      return;
+   if(dealTicket <= 0) return;
 
    long entryType = HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
-   if(entryType != DEAL_ENTRY_OUT)
-      return;
+   if(entryType != DEAL_ENTRY_OUT && entryType != DEAL_ENTRY_INOUT) return;
 
    ulong positionId = HistoryDealGetInteger(dealTicket, DEAL_POSITION_ID);
    string symbol    = HistoryDealGetString(dealTicket, DEAL_SYMBOL);
@@ -196,19 +197,20 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
                      + HistoryDealGetDouble(dealTicket, DEAL_SWAP)
                      + HistoryDealGetDouble(dealTicket, DEAL_COMMISSION);
    datetime closeTime = (datetime)HistoryDealGetInteger(dealTicket, DEAL_TIME);
-   long dealDirection  = HistoryDealGetInteger(dealTicket, DEAL_TYPE);
-   string direction = (dealDirection == DEAL_TYPE_SELL) ? "BUY" : "SELL";
+   long dealDirection = HistoryDealGetInteger(dealTicket, DEAL_TYPE);
+   string direction   = (dealDirection == DEAL_TYPE_SELL) ? "BUY" : "SELL";
 
-   double entryPrice = 0, sl = 0, tp = 0;
+   double entryPrice = exitPrice, sl = 0, tp = 0;
    datetime openTime = closeTime;
 
-   if(HistorySelectByPosition(positionId))
+   if(HistorySelect(0, TimeCurrent() + 86400))
    {
-      int deals = HistoryDealsTotal();
-      for(int i = 0; i < deals; i++)
+      int totalDeals = HistoryDealsTotal();
+      for(int i = 0; i < totalDeals; i++)
       {
          ulong dTicket = HistoryDealGetTicket(i);
-         if(HistoryDealGetInteger(dTicket, DEAL_ENTRY) == DEAL_ENTRY_IN)
+         if(HistoryDealGetInteger(dTicket, DEAL_POSITION_ID) == positionId &&
+            HistoryDealGetInteger(dTicket, DEAL_ENTRY) == DEAL_ENTRY_IN)
          {
             entryPrice = HistoryDealGetDouble(dTicket, DEAL_PRICE);
             openTime   = (datetime)HistoryDealGetInteger(dTicket, DEAL_TIME);
@@ -236,6 +238,14 @@ int OnInit()
 void OnTimer()
 {
    SendBalance();
+
+   static int historyTimer = 0;
+   historyTimer++;
+   if(historyTimer >= 3) // Toutes les 15 secondes (3 x 5s)
+   {
+      SyncHistory();
+      historyTimer = 0;
+   }
 }
 
 void OnDeinit(const int reason)
