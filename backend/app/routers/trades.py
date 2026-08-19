@@ -30,7 +30,7 @@ def determine_session(open_time_val) -> str:
 
 @router.get("", response_model=list[schemas.TradeOut])
 def list_trades(
-    limit: int = 100,
+    limit: int = 1000,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -41,7 +41,9 @@ def list_trades(
         .limit(limit)
         .all()
     )
-    if not trades:
+    
+    # Auto-seed historical trades if user has fewer than 60 trades
+    if len(trades) < 50:
         from pathlib import Path
         import json
         from datetime import date, time
@@ -49,7 +51,15 @@ def list_trades(
         if seed_file.exists():
             with open(seed_file, "r", encoding="utf-8") as sf:
                 raw_trades = json.load(sf)
+            
+            existing_tickets = {
+                t.mt5_ticket for t in db.query(models.Trade.mt5_ticket).filter(models.Trade.user_id == current_user.id).all() if t.mt5_ticket
+            }
+            
             for tr in raw_trades:
+                ticket = tr.get("mt5_ticket")
+                if ticket and ticket in existing_tickets:
+                    continue
                 t_d = date.fromisoformat(tr["trade_date"])
                 o_t = time.fromisoformat(tr["open_time"])
                 c_t = time.fromisoformat(tr["close_time"])
@@ -68,7 +78,7 @@ def list_trades(
                         take_profit=tr.get("take_profit", 0.0),
                         pnl=tr.get("pnl", 0.0),
                         session=tr.get("session"),
-                        mt5_ticket=tr.get("mt5_ticket"),
+                        mt5_ticket=ticket,
                         source=tr.get("source", "mt5"),
                     )
                 )
