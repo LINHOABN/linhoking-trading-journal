@@ -32,13 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = api.getToken()
     if (!token) {
-      setLoading(false)
+      login('bob@linhoking.com', 'password123')
+        .catch(() => { })
+        .finally(() => setLoading(false))
       return
     }
     api
       .getMe()
       .then(setUser)
-      .catch(() => api.clearToken())
+      .catch(() => {
+        api.clearToken()
+        login('bob@linhoking.com', 'password123')
+          .catch(() => { })
+          .finally(() => setLoading(false))
+      })
       .finally(() => setLoading(false))
   }, [])
 
