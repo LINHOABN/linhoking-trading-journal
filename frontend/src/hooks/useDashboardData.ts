@@ -18,7 +18,7 @@ interface DashboardData {
   refetch: () => void
 }
 
-export function useDashboardData(onRefreshUser?: () => void): DashboardData {
+export function useDashboardData(onRefreshUser?: () => void, user?: api.Me | null): DashboardData {
   const [trades, setTrades] = useState<Trade[]>([])
   const [riskState, setRiskState] = useState<api.RiskState | null>(null)
   const [startingCapital, setStartingCapital] = useState(0)
@@ -86,7 +86,7 @@ export function useDashboardData(onRefreshUser?: () => void): DashboardData {
       load()
     }, 5000)
     return () => clearInterval(interval)
-  }, [load])
+  }, [load, user])
 
   // Any live event (new trade, MT5 sync) triggers a refetch
   const liveConnected = useLiveSocket(true, load)

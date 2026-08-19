@@ -33,7 +33,7 @@ function Dashboard() {
     error,
     liveConnected,
     refetch,
-  } = useDashboardData(refreshUser)
+  } = useDashboardData(refreshUser, user)
   const mt5Balance = user?.mt5Balance ?? null
 
   const handleRefetch = () => {
