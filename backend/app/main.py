@@ -115,17 +115,29 @@ try:
             db.add(demo_tier)
             db.commit()
 
-        # Always ensure trades are seeded for the user if table is empty
+        # Always ensure trades are seeded for the user if count < 50
         user_for_trades = db.query(models.User).filter(models.User.email == "bob@linhoking.com").first()
-        if user_for_trades and db.query(models.Trade).filter(models.Trade.user_id == user_for_trades.id).count() == 0:
+        if user_for_trades and db.query(models.Trade).filter(models.Trade.user_id == user_for_trades.id).count() < 50:
             from pathlib import Path
             import json
             from datetime import date, time
-            seed_file = Path(__file__).parent / "seed_trades.json"
-            if seed_file.exists():
+            candidate_paths = [
+                Path(__file__).parent / "seed_trades.json",
+                Path(__file__).parent.parent / "app" / "seed_trades.json",
+                Path("/var/task/backend/app/seed_trades.json"),
+                Path("backend/app/seed_trades.json"),
+            ]
+            seed_file = next((p for p in candidate_paths if p.exists()), None)
+            if seed_file:
                 with open(seed_file, "r", encoding="utf-8") as sf:
                     raw_trades = json.load(sf)
+                existing_tickets = {
+                    t.mt5_ticket for t in db.query(models.Trade.mt5_ticket).filter(models.Trade.user_id == user_for_trades.id).all() if t.mt5_ticket
+                }
                 for tr in raw_trades:
+                    ticket = tr.get("mt5_ticket")
+                    if ticket and ticket in existing_tickets:
+                        continue
                     t_d = date.fromisoformat(tr["trade_date"])
                     o_t = time.fromisoformat(tr["open_time"])
                     c_t = time.fromisoformat(tr["close_time"])
@@ -144,7 +156,7 @@ try:
                             take_profit=tr.get("take_profit", 0.0),
                             pnl=tr.get("pnl", 0.0),
                             session=tr.get("session"),
-                            mt5_ticket=tr.get("mt5_ticket"),
+                            mt5_ticket=ticket,
                             source=tr.get("source", "mt5"),
                         )
                     )

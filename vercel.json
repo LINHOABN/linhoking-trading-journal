@@ -1,6 +1,6 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build && cd .. && python bundle_assets.py",
+    "buildCommand": "cd frontend && npm install && npm run build && cd .. && (python3 bundle_assets.py || python bundle_assets.py)",
     "routes": [
         {
             "src": "/(.*)",

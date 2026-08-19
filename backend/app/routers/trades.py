@@ -1,3 +1,6 @@
+from pathlib import Path
+import json
+from datetime import date, time
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -44,11 +47,14 @@ def list_trades(
     
     # Auto-seed historical trades if user has fewer than 60 trades
     if len(trades) < 50:
-        from pathlib import Path
-        import json
-        from datetime import date, time
-        seed_file = Path(__file__).parent.parent / "seed_trades.json"
-        if seed_file.exists():
+        candidate_paths = [
+            Path(__file__).parent.parent / "seed_trades.json",
+            Path(__file__).parent.parent.parent / "backend" / "app" / "seed_trades.json",
+            Path("/var/task/backend/app/seed_trades.json"),
+            Path("backend/app/seed_trades.json"),
+        ]
+        seed_file = next((p for p in candidate_paths if p.exists()), None)
+        if seed_file:
             with open(seed_file, "r", encoding="utf-8") as sf:
                 raw_trades = json.load(sf)
             
