@@ -1,7 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 import type { CapitalPoint } from '../types'
 import { useTheme } from '../context/ThemeContext'
-import { formatShortDate, formatFullDate } from '../lib/formatters'
+import { formatShortDate, formatFullDate, safeFixed } from '../lib/formatters'
 
 interface Props {
   data: CapitalPoint[]
@@ -15,7 +15,7 @@ export default function RiskEvolutionChart({ data }: Props) {
   const chartData = data.map((d) => ({
     date: d.date,
     capital: d.capital,
-    risque: +(d.capital * 0.04).toFixed(2),
+    risque: +(d.capital != null && !isNaN(d.capital) ? (d.capital * 0.04) : 0).toFixed(2),
   }))
 
   if (chartData.length === 1) {
@@ -77,7 +77,7 @@ export default function RiskEvolutionChart({ data }: Props) {
               }}
               labelFormatter={(label) => formatFullDate(String(label))}
               formatter={(value: number, name: string) => [
-                `${value.toFixed(2)} $`,
+                `${safeFixed(value)} $`,
                 name === 'capital' ? 'Capital' : 'Risque max / trade',
               ]}
             />

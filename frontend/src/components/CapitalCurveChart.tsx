@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import type { CapitalPoint } from '../types'
 import { useTheme } from '../context/ThemeContext'
-import { formatShortDate, formatFullDate } from '../lib/formatters'
+import { formatShortDate, formatFullDate, safeFixed } from '../lib/formatters'
 
 interface Props {
   data: CapitalPoint[]
@@ -78,7 +78,7 @@ export default function CapitalCurveChart({ data }: Props) {
             Courbe de capital
           </div>
           <div className="mt-0.5 font-mono text-[20px] font-semibold text-ink-900 dark:text-paper-50">
-            {lastCapital.toFixed(2)} $
+            {safeFixed(lastCapital)} $
           </div>
         </div>
 
@@ -94,8 +94,8 @@ export default function CapitalCurveChart({ data }: Props) {
               key={item.key}
               onClick={() => setPeriod(item.key as Period)}
               className={`px-3 py-1 font-mono text-[11px] transition-colors ${period === item.key
-                  ? 'bg-signal-data text-white font-semibold'
-                  : 'text-ink-500 dark:text-ink-300 hover:text-ink-900 dark:hover:text-paper-50'
+                ? 'bg-signal-data text-white font-semibold'
+                : 'text-ink-500 dark:text-ink-300 hover:text-ink-900 dark:hover:text-paper-50'
                 }`}
             >
               {item.label}
@@ -143,7 +143,7 @@ export default function CapitalCurveChart({ data }: Props) {
               }}
               labelStyle={{ color: textColor, fontWeight: 'bold' }}
               labelFormatter={(label) => formatFullDate(String(label))}
-              formatter={(value: number) => [`${value.toFixed(2)} $`, 'Capital']}
+              formatter={(value: number) => [`${safeFixed(value)} $`, 'Capital']}
             />
             <Area
               type="monotone"
