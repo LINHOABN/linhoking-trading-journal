@@ -214,13 +214,40 @@ export async function getTrades(): Promise<Trade[]> {
   return data.map(mapTrade)
 }
 
+export interface ApiStatsSummary {
+  win_rate: number
+  total_trades: number
+  avg_win: number
+  avg_loss: number
+  best_day: string | null
+  best_day_pnl: number | null
+  worst_day: string | null
+  worst_day_pnl: number | null
+  best_hour: string | null
+}
+
+export function mapStats(s: ApiStatsSummary | null | undefined): StatsSummary | null {
+  if (!s) return null
+  return {
+    winRate: s.win_rate ?? 0,
+    totalTrades: s.total_trades ?? 0,
+    avgWin: s.avg_win ?? 0,
+    avgLoss: s.avg_loss ?? 0,
+    bestDay: s.best_day ?? null,
+    bestDayPnl: s.best_day_pnl ?? null,
+    worstDay: s.worst_day ?? null,
+    worstDayPnl: s.worst_day_pnl ?? null,
+    bestHour: s.best_hour ?? null,
+  }
+}
+
 export interface DashboardSummaryResponse {
   trades: ApiTrade[]
   risk_state: RiskState | null
   tier: ApiTier | null
   capital_curve: CapitalPoint[]
   lot_history: LotStep[]
-  stats: StatsSummary | null
+  stats: ApiStatsSummary | null
   deposits: { total_invested: number; deposit_count: number; deposits: Deposit[] }
 }
 
@@ -244,7 +271,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     tier: { tier: tierObj, startingCapital: startingCap },
     capital_curve: data.capital_curve || [],
     lot_history: data.lot_history || [],
-    stats: data.stats || null,
+    stats: mapStats(data.stats),
     deposits: data.deposits || { total_invested: 0, deposit_count: 0, deposits: [] },
   }
 }
@@ -419,28 +446,20 @@ export interface StatsSummary {
 }
 
 export async function getStatsSummary(): Promise<StatsSummary> {
-  const data = await request<{
-    win_rate: number
-    total_trades: number
-    avg_win: number
-    avg_loss: number
-    best_day: string | null
-    best_day_pnl: number | null
-    worst_day: string | null
-    worst_day_pnl: number | null
-    best_hour: string | null
-  }>('/stats/summary')
-  return {
-    winRate: data.win_rate,
-    totalTrades: data.total_trades,
-    avgWin: data.avg_win,
-    avgLoss: data.avg_loss,
-    bestDay: data.best_day,
-    bestDayPnl: data.best_day_pnl,
-    worstDay: data.worst_day,
-    worstDayPnl: data.worst_day_pnl,
-    bestHour: data.best_hour,
-  }
+  const data = await request<ApiStatsSummary>('/stats/summary')
+  return (
+    mapStats(data) || {
+      winRate: 0,
+      totalTrades: 0,
+      avgWin: 0,
+      avgLoss: 0,
+      bestDay: null,
+      bestDayPnl: null,
+      worstDay: null,
+      worstDayPnl: null,
+      bestHour: null,
+    }
+  )
 }
 
 export async function getCapitalCurve(): Promise<CapitalPoint[]> {
