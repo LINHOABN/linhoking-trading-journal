@@ -58,6 +58,9 @@ class TradeCreate(TradeBase):
 
 class TradeUpdate(BaseModel):
     emotion: Optional[str] = None
+
+class VoicePayload(BaseModel):
+    audio_base64: str
     strategy: Optional[str] = None
     mistake: Optional[str] = None
     note: Optional[str] = None

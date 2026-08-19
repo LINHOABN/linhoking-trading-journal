@@ -83,7 +83,17 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            const mediaRecorder = new MediaRecorder(stream)
+            let options: MediaRecorderOptions = {}
+            if (typeof MediaRecorder.isTypeSupported === 'function') {
+                if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    options = { mimeType: 'audio/webm' }
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    options = { mimeType: 'audio/mp4' }
+                } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+                    options = { mimeType: 'audio/aac' }
+                }
+            }
+            const mediaRecorder = new MediaRecorder(stream, options)
             mediaRecorderRef.current = mediaRecorder
             audioChunksRef.current = []
 
@@ -94,7 +104,8 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
             }
 
             mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+                const mimeType = options.mimeType || 'audio/webm'
+                const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
                 if (audioBlob.size > 0) {
                     await handleUploadVoiceBlob(audioBlob)
                 }

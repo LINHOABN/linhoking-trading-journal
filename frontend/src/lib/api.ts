@@ -309,22 +309,17 @@ export async function deleteTradeScreenshot(tradeId: string, url: string): Promi
 }
 
 export async function uploadTradeVoice(tradeId: string, fileOrBlob: Blob): Promise<Trade> {
-  const token = getToken()
-  const formData = new FormData()
-  formData.append('file', fileOrBlob, 'voice_note.webm')
-
-  const res = await fetch(`${getApiUrl()}/trades/${tradeId}/voice`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+  const base64Url = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(fileOrBlob)
   })
 
-  if (!res.ok) {
-    throw new Error("Erreur lors de l'envoi de la note vocale")
-  }
-  const data: ApiTrade = await res.json()
+  const data = await request<ApiTrade>(`/trades/${tradeId}/voice_base64`, {
+    method: 'POST',
+    body: JSON.stringify({ audio_base64: base64Url }),
+  })
   return mapTrade(data)
 }
 

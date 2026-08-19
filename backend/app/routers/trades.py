@@ -282,6 +282,30 @@ async def upload_trade_voice(
     return trade
 
 
+@router.post("/{trade_id}/voice_base64", response_model=schemas.TradeOut)
+async def upload_trade_voice_base64(
+    trade_id: str,
+    payload: schemas.VoicePayload,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    trade = (
+        db.query(models.Trade)
+        .filter(models.Trade.id == trade_id, models.Trade.user_id == current_user.id)
+        .first()
+    )
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade introuvable")
+
+    trade.voice_url = payload.audio_base64
+    db.commit()
+    db.refresh(trade)
+    await manager.send_to_user(
+        current_user.id, {"type": "trade_updated", "trade_id": trade.id}
+    )
+    return trade
+
+
 @router.delete("/{trade_id}/voice", response_model=schemas.TradeOut)
 async def delete_trade_voice(
     trade_id: str,
