@@ -43,3 +43,15 @@ export function formatFullDate(dateStr: string): string {
         return dateStr
     }
 }
+
+/**
+ * Safely converts any value (number, string, undefined, null, NaN) to a fixed decimal string representation
+ * preventing any "Cannot read properties of undefined (reading 'toFixed')" runtime crashes.
+ */
+export function safeFixed(val: any, digits: number = 2): string {
+    const num = typeof val === 'number' ? val : parseFloat(String(val ?? '0'))
+    if (isNaN(num) || num === null || num === undefined) {
+        return (0).toFixed(digits)
+    }
+    return num.toFixed(digits)
+}

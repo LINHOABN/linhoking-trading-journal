@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Search, Filter, Image as ImageIcon, ExternalLink, Tag, ArrowUpDown, Calendar, X, RotateCcw, TrendingUp, TrendingDown, Mic } from 'lucide-react'
 import type { Trade } from '../types'
 import TradeDetailModal from './TradeDetailModal'
+import { safeFixed } from '../lib/formatters'
 
 interface Props {
   trades: Trade[]
@@ -288,7 +289,7 @@ export default function TradeJournal({ trades, onTradeUpdated }: Props) {
                     ? 'bg-signal-gain/10 text-signal-gain border border-signal-gain/20'
                     : 'bg-signal-loss/10 text-signal-loss border border-signal-loss/20'
                     }`}>
-                    {group.dailyPnl >= 0 ? '+' : ''}{group.dailyPnl.toFixed(2)} $
+                    {group.dailyPnl >= 0 ? '+' : ''}{safeFixed(group.dailyPnl)} $
                   </span>
                 </div>
               </div>
@@ -367,7 +368,7 @@ function TradeCard({ trade, onOpenModal }: { trade: Trade; onOpenModal: () => vo
               </span>
 
               <span className="font-mono text-[11px] text-ink-500 dark:text-ink-400">
-                {trade.volume.toFixed(2)} vol
+                {safeFixed(trade.volume)} vol
               </span>
 
               {trade.session && (
@@ -416,7 +417,7 @@ function TradeCard({ trade, onOpenModal }: { trade: Trade; onOpenModal: () => vo
               ? 'text-signal-gain drop-shadow-[0_0_12px_rgba(47,191,113,0.3)]'
               : 'text-signal-loss drop-shadow-[0_0_12px_rgba(229,72,77,0.3)]'
               }`}>
-              {isWin ? '+' : ''}{trade.pnl.toFixed(2)} $
+              {isWin ? '+' : ''}{safeFixed(trade.pnl)} $
             </span>
           </div>
         </div>

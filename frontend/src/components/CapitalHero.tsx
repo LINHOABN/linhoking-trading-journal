@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowDownRight, Wifi, Settings, PlusCircle, Trash2, X, Tr
 import type { CapitalPoint } from '../types'
 import type { Deposit } from '../lib/api'
 import { addDeposit, deleteDeposit } from '../lib/api'
+import { safeFixed } from '../lib/formatters'
 
 interface Props {
   curve: CapitalPoint[]
@@ -88,7 +89,7 @@ export default function CapitalHero({
 
         <div className="mt-4 flex items-baseline gap-2.5">
           <span className="font-mono text-[44px] font-extrabold leading-none text-ink-900 dark:text-paper-50 tracking-tight">
-            {displayBalance.toFixed(2)}
+            {safeFixed(displayBalance)}
           </span>
           <span className="font-mono text-[14px] font-bold text-ink-500 dark:text-ink-300">USD</span>
         </div>
@@ -103,7 +104,7 @@ export default function CapitalHero({
           >
             {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             {isPositive ? '+' : ''}
-            {changeFromStart.toFixed(1)}% ({totalPnL >= 0 ? '+' : ''}{totalPnL.toFixed(2)} $)
+            {safeFixed(changeFromStart, 1)}% ({totalPnL >= 0 ? '+' : ''}{safeFixed(totalPnL)} $)
           </div>
 
           {/* Capital invested */}
@@ -113,17 +114,17 @@ export default function CapitalHero({
             title="Gérer les versements"
           >
             <TrendingUp size={12} className="text-signal-data" />
-            <span>Investi : <strong className="text-signal-data">{totalInvested > 0 ? totalInvested.toFixed(2) : startingCapital.toFixed(2)} $</strong></span>
+            <span>Investi : <strong className="text-signal-data">{totalInvested > 0 ? safeFixed(totalInvested) : safeFixed(startingCapital)} $</strong></span>
             {roiVsInvested !== null && (
               <span className={`text-[10px] font-extrabold px-1.5 py-0.1 rounded ${roiVsInvested >= 0 ? 'bg-signal-gain/15 text-signal-gain' : 'bg-signal-loss/15 text-signal-loss'}`}>
-                {roiVsInvested >= 0 ? '+' : ''}{roiVsInvested.toFixed(1)}% ROI
+                {roiVsInvested >= 0 ? '+' : ''}{safeFixed(roiVsInvested, 1)}% ROI
               </span>
             )}
           </button>
 
           {/* Edit starting capital trigger */}
           <div className="flex items-center gap-2 font-mono text-[11px] text-ink-500 dark:text-ink-300 ml-auto">
-            <span className="opacity-80">Ressource départ : <strong>{startingCapital.toFixed(0)} $</strong></span>
+            <span className="opacity-80">Ressource départ : <strong>{safeFixed(startingCapital, 0)} $</strong></span>
             {onEditStartingCapital && (
               <button
                 onClick={onEditStartingCapital}
@@ -148,7 +149,7 @@ export default function CapitalHero({
                   Gestion de l'Investissement
                 </h3>
                 <p className="font-mono text-[10px] text-ink-500 mt-1">
-                  Somme rechargée : <strong className="text-signal-data">{(totalInvested > 0 ? totalInvested : startingCapital).toFixed(2)} $</strong>
+                  Somme rechargée : <strong className="text-signal-data">{safeFixed(totalInvested > 0 ? totalInvested : startingCapital)} $</strong>
                   {' '}({deposits.length} versement{deposits.length > 1 ? 's' : ''})
                 </p>
               </div>
@@ -167,7 +168,7 @@ export default function CapitalHero({
                 deposits.map((d) => (
                   <div key={d.id} className="flex items-center justify-between py-3 px-1 hover:bg-graphite-800/10 rounded transition-colors group">
                     <div>
-                      <div className="font-mono text-[13px] font-bold text-signal-gain">+{d.amount.toFixed(2)} $</div>
+                      <div className="font-mono text-[13px] font-bold text-signal-gain">+{safeFixed(d.amount)} $</div>
                       <div className="font-mono text-[10px] text-ink-500 mt-0.5">
                         {d.deposit_date} {d.label ? `· ${d.label}` : ''}
                       </div>

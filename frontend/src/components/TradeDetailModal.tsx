@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import type { Trade } from '../types'
 import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice } from '../lib/api'
+import { safeFixed } from '../lib/formatters'
 
 interface Props {
     trade: Trade
@@ -319,7 +320,7 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
                                 : 'bg-signal-loss/15 text-signal-loss'
                                 }`}
                         >
-                            {trade.direction} · {trade.volume.toFixed(2)} lot
+                            {trade.direction} · {safeFixed(trade.volume)} lot
                         </span>
                         {trade.session && (
                             <span className={`px-2 py-0.5 border font-mono text-[10px] uppercase font-semibold ${sessionStyle}`}>
@@ -472,7 +473,7 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
                                         }`}
                                 >
                                     {isWin ? '+' : ''}
-                                    {trade.pnl.toFixed(2)} $
+                                    {safeFixed(trade.pnl)} $
                                 </div>
                             </div>
 

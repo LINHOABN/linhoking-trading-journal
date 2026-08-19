@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts'
 import type { LotStep } from '../types'
-import { formatShortDate, formatFullDate } from '../lib/formatters'
+import { formatShortDate, formatFullDate, safeFixed } from '../lib/formatters'
 import { useTheme } from '../context/ThemeContext'
 import { BarChart3, Table as TableIcon, Layers } from 'lucide-react'
 
@@ -48,7 +48,7 @@ export default function LotHistoryChart({ data }: Props) {
           </div>
           <div className="mt-1 flex items-baseline gap-3">
             <span className="font-mono text-[22px] font-bold text-blue-500">
-              {lastLot.toFixed(2)} <span className="text-xs font-normal text-ink-400">lot(s) actuel</span>
+              {safeFixed(lastLot)} <span className="text-xs font-normal text-ink-400">lot(s) actuel</span>
             </span>
           </div>
         </div>
@@ -86,15 +86,15 @@ export default function LotHistoryChart({ data }: Props) {
         </div>
         <div>
           <div className="text-ink-400 text-[10px]">Volume Total Cumulé</div>
-          <div className="font-bold text-blue-500">{totalVolume.toFixed(2)} lots</div>
+          <div className="font-bold text-blue-500">{safeFixed(totalVolume)} lots</div>
         </div>
         <div>
           <div className="text-ink-400 text-[10px]">Lot Moyen</div>
-          <div className="font-bold text-ink-900 dark:text-paper-50">{avgLot.toFixed(2)} lot</div>
+          <div className="font-bold text-ink-900 dark:text-paper-50">{safeFixed(avgLot)} lot</div>
         </div>
         <div>
           <div className="text-ink-400 text-[10px]">Lot Max Atteint</div>
-          <div className="font-bold text-emerald-500">{maxLot.toFixed(2)} lot</div>
+          <div className="font-bold text-emerald-500">{safeFixed(maxLot)} lot</div>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default function LotHistoryChart({ data }: Props) {
                 stroke={gridColor}
                 domain={yDomain}
                 allowDecimals={true}
-                tickFormatter={(val) => `${val.toFixed(2)} lot`}
+                tickFormatter={(val) => `${safeFixed(val)} lot`}
               />
               <Tooltip content={<CustomTooltip theme={theme} gridColor={gridColor} textColor={textColor} />} />
               <ReferenceLine y={lastLot} stroke="#3B82F6" strokeDasharray="4 4" opacity={0.6} />
@@ -152,7 +152,7 @@ export default function LotHistoryChart({ data }: Props) {
                 <tr key={idx} className="hover:bg-paper-100 dark:hover:bg-graphite-800/40 transition-colors">
                   <td className="py-2 px-3 text-ink-400">{chartPoints.length - idx}</td>
                   <td className="py-2 px-3 text-ink-900 dark:text-paper-100">{formatFullDate(item.date)}</td>
-                  <td className="py-2 px-3 text-right font-bold text-blue-500">{item.lot.toFixed(2)} lot(s)</td>
+                  <td className="py-2 px-3 text-right font-bold text-blue-500">{safeFixed(item.lot)} lot(s)</td>
                 </tr>
               ))}
             </tbody>
@@ -178,7 +178,7 @@ function CustomTooltip({ active, payload, theme, gridColor, textColor }: any) {
     >
       <p style={{ color: textColor }} className="text-[10px]">{formatFullDate(item.date)}</p>
       <p className="font-bold text-blue-500">
-        Volume : <span className="text-ink-900 dark:text-paper-50">{item.lot.toFixed(2)} lot(s)</span>
+        Volume : <span className="text-ink-900 dark:text-paper-50">{safeFixed(item.lot)} lot(s)</span>
       </p>
     </div>
   )

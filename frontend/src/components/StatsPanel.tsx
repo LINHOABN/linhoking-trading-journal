@@ -1,4 +1,5 @@
 import type { StatsSummary } from '../lib/api'
+import { safeFixed } from '../lib/formatters'
 
 interface Props {
   stats: StatsSummary
@@ -12,17 +13,17 @@ export default function StatsPanel({ stats }: Props) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-        <Stat label="Taux de réussite" value={`${stats.winRate.toFixed(0)}%`} />
+        <Stat label="Taux de réussite" value={`${safeFixed(stats.winRate, 0)}%`} />
         <Stat label="Trades totaux" value={`${stats.totalTrades}`} />
-        <Stat label="Gain moyen" value={`+${stats.avgWin.toFixed(2)} $`} tone="gain" />
-        <Stat label="Perte moyenne" value={`${stats.avgLoss.toFixed(2)} $`} tone="loss" />
+        <Stat label="Gain moyen" value={`+${safeFixed(stats.avgWin)} $`} tone="gain" />
+        <Stat label="Perte moyenne" value={`${safeFixed(stats.avgLoss)} $`} tone="loss" />
         <Stat
           label="Meilleur jour"
-          value={stats.bestDay ? `${stats.bestDay.slice(5)} · +${stats.bestDayPnl?.toFixed(0)}$` : '—'}
+          value={stats.bestDay ? `${stats.bestDay.slice(5)} · +${safeFixed(stats.bestDayPnl, 0)}$` : '—'}
         />
         <Stat
           label="Pire jour"
-          value={stats.worstDay ? `${stats.worstDay.slice(5)} · ${stats.worstDayPnl?.toFixed(0)}$` : '—'}
+          value={stats.worstDay ? `${stats.worstDay.slice(5)} · ${safeFixed(stats.worstDayPnl, 0)}$` : '—'}
         />
       </div>
 
@@ -46,13 +47,12 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 'ga
         {label}
       </div>
       <div
-        className={`mt-1 font-mono text-[14px] font-semibold ${
-          tone === 'gain'
+        className={`mt-1 font-mono text-[14px] font-semibold ${tone === 'gain'
             ? 'text-signal-gain'
             : tone === 'loss'
-            ? 'text-signal-loss'
-            : 'text-ink-900 dark:text-paper-50'
-        }`}
+              ? 'text-signal-loss'
+              : 'text-ink-900 dark:text-paper-50'
+          }`}
       >
         {value}
       </div>

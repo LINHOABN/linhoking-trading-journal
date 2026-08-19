@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, ExternalLink, Activity } from 'lucide-react'
 import type { Trade } from '../types'
 import TradeDetailModal from './TradeDetailModal'
+import { safeFixed } from '../lib/formatters'
 
 interface Props {
   trades: Trade[]
@@ -181,7 +182,7 @@ export default function TradingCalendar({ trades, initialYear, initialMonth, onT
         </div>
         <div className="text-center flex flex-col items-center justify-center gap-0.5">
           <span className="text-[10px] text-ink-500 dark:text-ink-400 uppercase tracking-wider">Win Rate</span>
-          <span className="font-bold text-[14px] text-ink-900 dark:text-paper-50">{monthStats.winRate.toFixed(1)}%</span>
+          <span className="font-bold text-[14px] text-ink-900 dark:text-paper-50">{safeFixed(monthStats.winRate, 1)}%</span>
         </div>
         <div className="text-center flex flex-col items-center justify-center gap-0.5">
           <span className="text-[10px] text-ink-500 dark:text-ink-400 uppercase tracking-wider">P&L Mensuel</span>
@@ -190,7 +191,7 @@ export default function TradingCalendar({ trades, initialYear, initialMonth, onT
               }`}
           >
             {monthStats.monthlyPnl >= 0 ? '+' : ''}
-            {monthStats.monthlyPnl.toFixed(2)} $
+            {safeFixed(monthStats.monthlyPnl)} $
           </span>
         </div>
       </div>
@@ -221,8 +222,8 @@ export default function TradingCalendar({ trades, initialYear, initialMonth, onT
               key={idx}
               onClick={() => hasTrades && handleDayClick(dateKey)}
               className={`aspect-square rounded-xl p-2 flex flex-col justify-between transition-all duration-300 relative border group ${hasTrades
-                  ? 'cursor-pointer hover:scale-105 hover:-translate-y-0.5 hover:shadow-premium hover:z-20'
-                  : 'pointer-events-none'
+                ? 'cursor-pointer hover:scale-105 hover:-translate-y-0.5 hover:shadow-premium hover:z-20'
+                : 'pointer-events-none'
                 } ${isWin
                   ? 'bg-gradient-to-br from-signal-gain/5 via-signal-gain/10 to-signal-gain/15 border-signal-gain/30 hover:border-signal-gain shadow-glow-gain/5'
                   : isLoss
@@ -247,7 +248,7 @@ export default function TradingCalendar({ trades, initialYear, initialMonth, onT
                     }`}
                 >
                   {isWin ? '+' : ''}
-                  {entry.pnl.toFixed(0)} $
+                  {safeFixed(entry.pnl, 0)} $
                 </div>
               )}
             </div>
@@ -302,7 +303,7 @@ export default function TradingCalendar({ trades, initialYear, initialMonth, onT
                           {t.direction}
                         </span>
                         <span className="text-ink-500 text-[10px]">
-                          {t.volume.toFixed(2)} Vol
+                          {safeFixed(t.volume)} Vol
                         </span>
                       </div>
 
@@ -316,7 +317,7 @@ export default function TradingCalendar({ trades, initialYear, initialMonth, onT
                         className={`font-mono text-sm font-bold ${isWin ? 'text-signal-gain' : 'text-signal-loss'}`}
                       >
                         {isWin ? '+' : ''}
-                        {t.pnl.toFixed(2)} $
+                        {safeFixed(t.pnl)} $
                       </span>
 
                       <ExternalLink size={13} className="text-ink-500 group-hover:text-signal-data transition-colors" />

@@ -1,5 +1,6 @@
 import { TrendingUp, AlertTriangle, Target, Layers, DollarSign, BarChart2, ShieldAlert } from 'lucide-react'
 import type { RiskState } from '../lib/api'
+import { safeFixed } from '../lib/formatters'
 
 interface Props {
   risk: RiskState
@@ -77,7 +78,7 @@ export default function TierLadder({ risk }: Props) {
           />
         </div>
         <div className="mt-1 font-mono text-[11px] text-ink-500 dark:text-ink-400 text-right">
-          Encore <span className="text-ink-900 dark:text-paper-50 font-semibold">{risk.reste.toFixed(2)} $</span> avant le prochain niveau
+          Encore <span className="text-ink-900 dark:text-paper-50 font-semibold">{safeFixed(risk.reste)} $</span> avant le prochain niveau
         </div>
       </div>
 
@@ -86,13 +87,13 @@ export default function TierLadder({ risk }: Props) {
         <StatCard
           icon={<Layers size={11} />}
           label="Lot actif"
-          value={risk.lot.toFixed(2)}
+          value={safeFixed(risk.lot)}
           sub={`Niveau ${risk.niveau} $`}
         />
         <StatCard
           icon={<DollarSign size={11} />}
           label="Risque / trade"
-          value={`${risk.risque.toFixed(0)} $`}
+          value={`${safeFixed(risk.risque, 0)} $`}
           sub={`${risk.niveau} × 5%`}
           highlight="warn"
         />
@@ -100,13 +101,13 @@ export default function TierLadder({ risk }: Props) {
           icon={<Target size={11} />}
           label="Objectif"
           value={`${risk.objectif} $`}
-          sub={`+${risk.reste.toFixed(2)} $ restants`}
+          sub={`+${safeFixed(risk.reste)} $ restants`}
           highlight="data"
         />
         <StatCard
           icon={<BarChart2 size={11} />}
           label="Progression"
-          value={`${risk.progression.toFixed(1)} %`}
+          value={`${safeFixed(risk.progression, 1)} %`}
           sub={`vers ${risk.objectif} $`}
           highlight={risk.progression >= 85 ? 'gain' : undefined}
         />
@@ -120,7 +121,7 @@ export default function TierLadder({ risk }: Props) {
         <StatCard
           icon={<TrendingUp size={11} />}
           label="Capital actuel"
-          value={`${risk.capital.toFixed(2)} $`}
+          value={`${safeFixed(risk.capital)} $`}
           sub={`Palier ${risk.niveau} $`}
           highlight={risk.capital >= risk.objectif ? 'gain' : undefined}
         />
