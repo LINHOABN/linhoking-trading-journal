@@ -41,6 +41,46 @@ def list_trades(
         .limit(limit)
         .all()
     )
+    if not trades:
+        from pathlib import Path
+        import json
+        from datetime import date, time
+        seed_file = Path(__file__).parent.parent / "seed_trades.json"
+        if seed_file.exists():
+            with open(seed_file, "r", encoding="utf-8") as sf:
+                raw_trades = json.load(sf)
+            for tr in raw_trades:
+                t_d = date.fromisoformat(tr["trade_date"])
+                o_t = time.fromisoformat(tr["open_time"])
+                c_t = time.fromisoformat(tr["close_time"])
+                db.add(
+                    models.Trade(
+                        user_id=current_user.id,
+                        trade_date=t_d,
+                        open_time=o_t,
+                        close_time=c_t,
+                        symbol=tr.get("symbol", "XAUUSD"),
+                        direction=tr.get("direction", "BUY"),
+                        volume=tr.get("volume", 0.01),
+                        entry_price=tr.get("entry_price", 0.0),
+                        exit_price=tr.get("exit_price", 0.0),
+                        stop_loss=tr.get("stop_loss", 0.0),
+                        take_profit=tr.get("take_profit", 0.0),
+                        pnl=tr.get("pnl", 0.0),
+                        session=tr.get("session"),
+                        mt5_ticket=tr.get("mt5_ticket"),
+                        source=tr.get("source", "mt5"),
+                    )
+                )
+            db.commit()
+            trades = (
+                db.query(models.Trade)
+                .filter(models.Trade.user_id == current_user.id)
+                .order_by(desc(models.Trade.trade_date), desc(models.Trade.open_time))
+                .limit(limit)
+                .all()
+            )
+
     for t in trades:
         if not t.session:
             t.session = determine_session(t.open_time)
