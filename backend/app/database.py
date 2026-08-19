@@ -27,8 +27,12 @@ class Base(DeclarativeBase):
 def get_db():
     try:
         Base.metadata.create_all(bind=engine)
+        with engine.connect() as conn:
+            from sqlalchemy import text
+            conn.execute(text("ALTER TABLE trades ADD COLUMN IF NOT EXISTS voice_url VARCHAR;"))
+            conn.commit()
     except Exception as e:
-        print(f"[DB] Warning: create_all failed: {e}")
+        print(f"[DB] Warning: create_all or alter failed: {e}")
     db = SessionLocal()
     try:
         yield db
