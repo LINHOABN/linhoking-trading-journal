@@ -160,7 +160,8 @@ function mapTrade(t: ApiTrade): Trade {
   let parsedConfluences: string[] = []
   if (t.confluences) {
     try {
-      parsedConfluences = JSON.parse(t.confluences)
+      const parsed = typeof t.confluences === 'string' ? JSON.parse(t.confluences) : t.confluences
+      if (Array.isArray(parsed)) parsedConfluences = parsed
     } catch {
       parsedConfluences = []
     }
@@ -169,33 +170,36 @@ function mapTrade(t: ApiTrade): Trade {
   let parsedScreenshots: string[] = []
   if (t.screenshot_url) {
     try {
-      const parsed = JSON.parse(t.screenshot_url)
+      const parsed = typeof t.screenshot_url === 'string' ? JSON.parse(t.screenshot_url) : t.screenshot_url
       if (Array.isArray(parsed)) {
         parsedScreenshots = parsed
-      } else {
-        parsedScreenshots = [t.screenshot_url]
+      } else if (t.screenshot_url) {
+        parsedScreenshots = [String(t.screenshot_url)]
       }
     } catch {
-      parsedScreenshots = [t.screenshot_url]
+      if (t.screenshot_url) parsedScreenshots = [String(t.screenshot_url)]
     }
   }
 
+  const openTimeStr = typeof t.open_time === 'string' ? t.open_time : (t.open_time ? String(t.open_time) : '00:00')
+  const closeTimeStr = typeof t.close_time === 'string' ? t.close_time : (t.close_time ? String(t.close_time) : '00:00')
+
   return {
     id: t.id,
-    date: t.trade_date,
-    openTime: t.open_time.slice(0, 5),
-    closeTime: t.close_time.slice(0, 5),
-    symbol: t.symbol,
-    direction: t.direction,
-    volume: t.volume,
-    entryPrice: t.entry_price,
-    exitPrice: t.exit_price,
-    stopLoss: t.stop_loss,
-    takeProfit: t.take_profit,
-    pnl: t.pnl,
+    date: String(t.trade_date || ''),
+    openTime: openTimeStr.slice(0, 5),
+    closeTime: closeTimeStr.slice(0, 5),
+    symbol: t.symbol || 'XAUUSD',
+    direction: t.direction || 'BUY',
+    volume: t.volume ?? 0.01,
+    entryPrice: t.entry_price ?? 0,
+    exitPrice: t.exit_price ?? 0,
+    stopLoss: t.stop_loss ?? 0,
+    takeProfit: t.take_profit ?? 0,
+    pnl: t.pnl ?? 0,
     emotion: t.emotion ?? undefined,
     strategy: t.strategy ?? '',
-    mistake: t.mistake,
+    mistake: t.mistake ?? undefined,
     note: t.note ?? '',
     session: t.session ?? undefined,
     confluences: parsedConfluences,
