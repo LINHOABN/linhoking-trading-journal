@@ -46,7 +46,21 @@ export function useDashboardData(onRefreshUser?: () => void): DashboardData {
         api.getDeposits().catch(() => ({ total_invested: 0, deposit_count: 0, deposits: [] })),
       ])
       setTrades(tradesData)
-      setRiskState(riskData)
+
+      setRiskState((prevRisk) => {
+        const cachedCapital = localStorage.getItem('linhoking_cached_capital')
+        const prevCap = prevRisk?.capital || (cachedCapital ? parseFloat(cachedCapital) : null)
+
+        // If the serverless container returned default 200 but we have a live non-200 balance, keep live balance
+        if (riskData.capital === 200 && prevCap && prevCap !== 200) {
+          return { ...riskData, capital: prevCap }
+        }
+        if (riskData.capital !== 200) {
+          localStorage.setItem('linhoking_cached_capital', riskData.capital.toString())
+        }
+        return riskData
+      })
+
       setStartingCapital(tierData.startingCapital)
       setTotalInvested(depositsData.total_invested)
       setDeposits(depositsData.deposits)

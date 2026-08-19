@@ -28,7 +28,12 @@ export default function CapitalHero({
   const [newLabel, setNewLabel] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const displayBalance = mt5Balance !== null ? mt5Balance : (curve.length > 0 ? curve[curve.length - 1].capital : startingCapital)
+  const cachedCapStr = localStorage.getItem('linhoking_cached_capital')
+  const cachedCap = cachedCapStr ? parseFloat(cachedCapStr) : null
+  const displayBalance = mt5Balance !== null
+    ? mt5Balance
+    : (cachedCap !== null ? cachedCap : (curve.length > 0 ? curve[curve.length - 1].capital : startingCapital))
+
   const totalPnL = displayBalance - startingCapital
   const changeFromStart = startingCapital > 0 ? (totalPnL / startingCapital) * 100 : 0
   const isPositive = totalPnL >= 0
@@ -92,8 +97,8 @@ export default function CapitalHero({
           {/* P&L Badge */}
           <div
             className={`flex items-center gap-1 font-mono text-[13px] font-bold px-2.5 py-0.5 rounded-lg border transition-all ${isPositive
-                ? 'bg-signal-gain/10 text-signal-gain border-signal-gain/20 shadow-glow-gain'
-                : 'bg-signal-loss/10 text-signal-loss border-signal-loss/20 shadow-glow-loss'
+              ? 'bg-signal-gain/10 text-signal-gain border-signal-gain/20 shadow-glow-gain'
+              : 'bg-signal-loss/10 text-signal-loss border-signal-loss/20 shadow-glow-loss'
               }`}
           >
             {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
