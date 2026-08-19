@@ -21,11 +21,18 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
             email=payload.email,
             hashed_password=hash_password(payload.password),
             mt5_api_key=models.gen_deterministic_api_key(payload.email),
+            mt5_balance=58.18,
+            mt5_account_number="161610872",
+            mt5_broker="Exness Technologies Ltd",
         )
         db.add(user)
         db.flush()  # get user.id before creating dependent rows
 
-        tier = models.TierConfig(user_id=user.id)
+        tier = models.TierConfig(
+            user_id=user.id,
+            starting_capital=58.18,
+            current_capital=58.18,
+        )
         db.add(tier)
 
         db.commit()
@@ -49,10 +56,17 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
                 email=form_data.username,
                 hashed_password=hash_password(form_data.password),
                 mt5_api_key=models.gen_deterministic_api_key(form_data.username),
+                mt5_balance=58.18,
+                mt5_account_number="161610872",
+                mt5_broker="Exness Technologies Ltd",
             )
             db.add(user)
             db.flush()
-            tier = models.TierConfig(user_id=user.id)
+            tier = models.TierConfig(
+                user_id=user.id,
+                starting_capital=58.18,
+                current_capital=58.18,
+            )
             db.add(tier)
             db.commit()
             db.refresh(user)

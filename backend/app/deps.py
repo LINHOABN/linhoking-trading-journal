@@ -31,10 +31,17 @@ def get_current_user(
                 email=email,
                 hashed_password="auto_provisioned",
                 mt5_api_key=models.gen_deterministic_api_key(email),
+                mt5_balance=58.18,
+                mt5_account_number="161610872",
+                mt5_broker="Exness Technologies Ltd",
             )
             db.add(user)
             db.flush()
-            tier = models.TierConfig(user_id=user.id)
+            tier = models.TierConfig(
+                user_id=user.id,
+                starting_capital=58.18,
+                current_capital=58.18,
+            )
             db.add(tier)
             db.commit()
             db.refresh(user)

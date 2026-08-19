@@ -101,10 +101,17 @@ try:
                 email="bob@linhoking.com",
                 hashed_password=hash_password("password123"),
                 mt5_api_key=models.gen_deterministic_api_key("bob@linhoking.com"),
+                mt5_balance=58.18,
+                mt5_account_number="161610872",
+                mt5_broker="Exness Technologies Ltd",
             )
             db.add(demo_user)
             db.flush()
-            demo_tier = models.TierConfig(user_id=demo_user.id)
+            demo_tier = models.TierConfig(
+                user_id=demo_user.id,
+                starting_capital=58.18,
+                current_capital=58.18,
+            )
             db.add(demo_tier)
             db.commit()
 
