@@ -20,13 +20,14 @@ import {
     Volume2,
 } from 'lucide-react'
 import type { Trade } from '../types'
-import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice, getApiUrl } from '../lib/api'
+import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice, deleteTrade, getApiUrl } from '../lib/api'
 import { safeFixed } from '../lib/formatters'
 
 interface Props {
     trade: Trade
     onClose: () => void
     onTradeUpdated: (trade: Trade) => void
+    onTradeDeleted?: (tradeId: string) => void
 }
 
 const DEFAULT_CONFLUENCES = [
@@ -49,12 +50,13 @@ const SESSION_COLORS: Record<string, string> = {
 
 const CONFLUENCE_STORAGE_KEY = 'linhoking_custom_confluences'
 
-export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Props) {
+export default function TradeDetailModal({ trade, onClose, onTradeUpdated, onTradeDeleted }: Props) {
     const isWin = trade.pnl >= 0
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [uploading, setUploading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [deletingTrade, setDeletingTrade] = useState(false)
 
     // Photos state
     const screenshots = trade.screenshots || (trade.screenshotUrl ? [trade.screenshotUrl] : [])
@@ -254,12 +256,64 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
         setConfluences((prev) => prev.filter((c) => c !== item))
     }
 
+    const compressImage = (file: File): Promise<File> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                const img = new Image()
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    let width = img.width
+                    let height = img.height
+                    const maxDim = 1600
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width)
+                            width = maxDim
+                        } else {
+                            width = Math.round((width * maxDim) / height)
+                            height = maxDim
+                        }
+                    }
+                    canvas.width = width
+                    canvas.height = height
+                    const ctx = canvas.getContext('2d')
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height)
+                        canvas.toBlob(
+                            (blob) => {
+                                if (blob) {
+                                    const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.jpg', {
+                                        type: 'image/jpeg',
+                                        lastModified: Date.now(),
+                                    })
+                                    resolve(compressed)
+                                } else {
+                                    resolve(file)
+                                }
+                            },
+                            'image/jpeg',
+                            0.82
+                        )
+                    } else {
+                        resolve(file)
+                    }
+                }
+                img.onerror = () => resolve(file)
+                img.src = e.target?.result as string
+            }
+            reader.onerror = () => resolve(file)
+            reader.readAsDataURL(file)
+        })
+    }
+
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
         try {
             setUploading(true)
-            const updated = await uploadTradeScreenshot(trade.id, file)
+            const compressed = await compressImage(file)
+            const updated = await uploadTradeScreenshot(trade.id, compressed)
             onTradeUpdated(updated)
             setSelectedPhotoIndex((updated.screenshots?.length || 1) - 1)
         } catch {
@@ -273,11 +327,25 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
         e.stopPropagation()
         if (!confirm('Voulez-vous supprimer cette capture d’écran ?')) return
         try {
-            const updated = await deleteTradeScreenshot(trade.id, photoUrl)
+            const updated = await deleteTradeScreenshot(trade.id, selectedPhotoIndex)
             onTradeUpdated(updated)
             setSelectedPhotoIndex((prev) => Math.max(0, prev - 1))
         } catch {
             alert('Erreur lors de la suppression de l’image')
+        }
+    }
+
+    const handleDeleteTrade = async () => {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement ce trade ? Cette action est irréversible.')) return
+        try {
+            setDeletingTrade(true)
+            await deleteTrade(trade.id)
+            onTradeDeleted?.(trade.id)
+            onClose()
+        } catch {
+            alert('Erreur lors de la suppression du trade')
+        } finally {
+            setDeletingTrade(false)
         }
     }
 
@@ -732,8 +800,18 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
 
                 {/* Footer Bar */}
                 <div className="flex items-center justify-between border-t border-graphite-700 px-6 py-3 bg-paper-100 dark:bg-graphite-800">
-                    <div className="font-mono text-[11px] text-ink-500">
-                        ID: <span className="text-ink-900 dark:text-paper-50 font-semibold">{trade.id.slice(0, 8)}</span>
+                    <div className="flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={handleDeleteTrade}
+                            disabled={deletingTrade}
+                            className="flex items-center gap-1.5 bg-signal-loss/10 hover:bg-signal-loss text-signal-loss hover:text-white border border-signal-loss/30 font-mono text-[11px] px-3 py-1.5 font-semibold transition-colors rounded"
+                        >
+                            <Trash2 size={13} /> {deletingTrade ? 'Suppression…' : 'Supprimer ce trade'}
+                        </button>
+                        <span className="font-mono text-[11px] text-ink-500">
+                            ID: <span className="text-ink-900 dark:text-paper-50 font-semibold">{trade.id.slice(0, 8)}</span>
+                        </span>
                     </div>
                     <div className="flex items-center gap-3">
                         <button

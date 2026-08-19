@@ -314,6 +314,12 @@ export default function TradeJournal({ trades, onTradeUpdated }: Props) {
             setSelectedTrade(updated)
             onTradeUpdated?.(updated)
           }}
+          onTradeDeleted={() => {
+            setSelectedTrade(null)
+            if (trades.length > 0) {
+              onTradeUpdated?.(trades[0])
+            }
+          }}
         />
       )}
     </div>

@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+from typing import Optional
 from datetime import date, time
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, UploadFile, File
 from sqlalchemy.orm import Session
@@ -246,7 +247,8 @@ async def upload_trade_screenshot(
 @router.delete("/{trade_id}/screenshot", response_model=schemas.TradeOut)
 async def delete_trade_screenshot(
     trade_id: str,
-    url: str,
+    index: Optional[int] = None,
+    url: Optional[str] = None,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -263,12 +265,16 @@ async def delete_trade_screenshot(
         try:
             parsed = json.loads(trade.screenshot_url)
             if isinstance(parsed, list):
-                filtered = [item for item in parsed if item != url]
-                trade.screenshot_url = json.dumps(filtered) if filtered else None
-            elif trade.screenshot_url == url:
+                if index is not None and 0 <= index < len(parsed):
+                    parsed.pop(index)
+                    trade.screenshot_url = json.dumps(parsed) if parsed else None
+                elif url:
+                    filtered = [item for item in parsed if item != url]
+                    trade.screenshot_url = json.dumps(filtered) if filtered else None
+            elif (index == 0) or (url and trade.screenshot_url == url):
                 trade.screenshot_url = None
         except Exception:
-            if trade.screenshot_url == url:
+            if (index == 0) or (url and trade.screenshot_url == url):
                 trade.screenshot_url = None
 
     db.commit()

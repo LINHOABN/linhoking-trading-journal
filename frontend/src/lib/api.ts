@@ -363,8 +363,15 @@ export async function uploadTradeScreenshot(tradeId: string, file: File): Promis
   return mapTrade(data)
 }
 
-export async function deleteTradeScreenshot(tradeId: string, url: string): Promise<Trade> {
-  const data = await request<ApiTrade>(`/trades/${tradeId}/screenshot?url=${encodeURIComponent(url)}`, {
+export async function deleteTrade(tradeId: string): Promise<void> {
+  await request<void>(`/trades/${tradeId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function deleteTradeScreenshot(tradeId: string, indexOrUrl: number | string): Promise<Trade> {
+  const query = typeof indexOrUrl === 'number' ? `index=${indexOrUrl}` : `url=${encodeURIComponent(indexOrUrl)}`
+  const data = await request<ApiTrade>(`/trades/${tradeId}/screenshot?${query}`, {
     method: 'DELETE',
   })
   return mapTrade(data)
