@@ -31,6 +31,35 @@ def determine_session(open_time_val) -> str:
         return "New York"
 
 
+@router.get("/dashboard_summary")
+def get_dashboard_summary(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.routers.risk import get_risk_state
+    from app.routers.tiers import get_tier, get_capital_curve, get_lot_history
+    from app.routers.stats import get_stats_summary
+    from app.routers.deposits import get_deposits
+
+    trades_list = list_trades(limit=1000, current_user=current_user, db=db)
+    risk_state = get_risk_state(current_user=current_user, db=db)
+    tier_data = get_tier(current_user=current_user, db=db)
+    curve_data = get_capital_curve(current_user=current_user, db=db)
+    lot_data = get_lot_history(current_user=current_user, db=db)
+    stats_data = get_stats_summary(current_user=current_user, db=db)
+    deposits_data = get_deposits(current_user=current_user, db=db)
+
+    return {
+        "trades": trades_list,
+        "risk_state": risk_state,
+        "tier": tier_data,
+        "capital_curve": curve_data,
+        "lot_history": lot_data,
+        "stats": stats_data,
+        "deposits": deposits_data,
+    }
+
+
 @router.get("", response_model=list[schemas.TradeOut])
 def list_trades(
     limit: int = 1000,

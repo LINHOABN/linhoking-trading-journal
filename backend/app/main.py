@@ -53,8 +53,8 @@ INDEX_HTML = f"""<!doctype html>
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/{JS_FILENAME}?v=0.3.4"></script>
-    <link rel="stylesheet" crossorigin href="/assets/{CSS_FILENAME}?v=0.3.4">
+    <script type="module" crossorigin src="/assets/{JS_FILENAME}?v=0.3.5"></script>
+    <link rel="stylesheet" crossorigin href="/assets/{CSS_FILENAME}?v=0.3.5">
   </head>
   <body>
     <div id="root"></div>

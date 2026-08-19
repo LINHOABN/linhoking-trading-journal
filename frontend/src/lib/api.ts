@@ -214,6 +214,39 @@ export async function getTrades(): Promise<Trade[]> {
   return data.map(mapTrade)
 }
 
+export interface DashboardSummaryResponse {
+  trades: ApiTrade[]
+  risk_state: RiskState | null
+  tier: { tier: any; startingCapital: number }
+  capital_curve: CapitalPoint[]
+  lot_history: LotStep[]
+  stats: StatsSummary | null
+  deposits: { total_invested: number; deposit_count: number; deposits: Deposit[] }
+}
+
+export interface DashboardSummary {
+  trades: Trade[]
+  risk_state: RiskState | null
+  tier: { tier: any; startingCapital: number }
+  capital_curve: CapitalPoint[]
+  lot_history: LotStep[]
+  stats: StatsSummary | null
+  deposits: { total_invested: number; deposit_count: number; deposits: Deposit[] }
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const data = await request<DashboardSummaryResponse>('/trades/dashboard_summary')
+  return {
+    trades: (data.trades || []).map(mapTrade),
+    risk_state: data.risk_state || null,
+    tier: data.tier || { tier: null, startingCapital: 58.18 },
+    capital_curve: data.capital_curve || [],
+    lot_history: data.lot_history || [],
+    stats: data.stats || null,
+    deposits: data.deposits || { total_invested: 0, deposit_count: 0, deposits: [] },
+  }
+}
+
 export interface NewTradeInput {
   date: string
   openTime: string

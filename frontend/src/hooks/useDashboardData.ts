@@ -36,18 +36,10 @@ export function useDashboardData(onRefreshUser?: () => void, user?: api.Me | nul
       return
     }
     try {
-      const [tradesData, riskData, tierData, curveData, lotData, statsData, depositsData] = await Promise.all([
-        api.getTrades().catch(() => [] as any[]),
-        api.getRiskState().catch(() => null),
-        api.getTier().catch(() => ({ tier: null, startingCapital: 58.18 })),
-        api.getCapitalCurve().catch(() => []),
-        api.getLotHistory().catch(() => []),
-        api.getStatsSummary().catch(() => null),
-        api.getDeposits().catch(() => ({ total_invested: 0, deposit_count: 0, deposits: [] })),
-      ])
-      setTrades(tradesData ?? [])
+      const summary = await api.getDashboardSummary()
+      setTrades(summary.trades ?? [])
 
-      const safeRisk = riskData as api.RiskState | null
+      const safeRisk = summary.risk_state
       setRiskState((prevRisk) => {
         if (!safeRisk) return prevRisk // keep previous on failure
         const cachedCapital = localStorage.getItem('linhoking_cached_capital')
@@ -62,18 +54,17 @@ export function useDashboardData(onRefreshUser?: () => void, user?: api.Me | nul
         return safeRisk
       })
 
-      const safeTier = tierData as { tier: any; startingCapital: number }
+      const safeTier = summary.tier ?? { tier: null, startingCapital: 58.18 }
       const capVal = safeRisk && safeRisk.capital !== 200 ? safeRisk.capital : (safeTier.startingCapital !== 200 ? safeTier.startingCapital : 58.18)
       setStartingCapital(safeTier.startingCapital !== 200 ? safeTier.startingCapital : capVal)
-      setTotalInvested(depositsData.total_invested)
-      setDeposits(depositsData.deposits)
-      setCapitalCurve(curveData ?? [])
-      setLotHistory(lotData ?? [])
-      if (statsData) setStats(statsData)
+      setTotalInvested(summary.deposits?.total_invested ?? 0)
+      setDeposits(summary.deposits?.deposits ?? [])
+      setCapitalCurve(summary.capital_curve ?? [])
+      setLotHistory(summary.lot_history ?? [])
+      if (summary.stats) setStats(summary.stats)
       setError(null)
       onRefreshUser?.()
     } catch (e) {
-      // Even on catastrophic error, don't show error — just stop loading
       console.error('Dashboard load error:', e)
     } finally {
       setLoading(false)
