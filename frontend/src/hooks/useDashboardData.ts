@@ -37,41 +37,44 @@ export function useDashboardData(onRefreshUser?: () => void): DashboardData {
     }
     try {
       const [tradesData, riskData, tierData, curveData, lotData, statsData, depositsData] = await Promise.all([
-        api.getTrades(),
-        api.getRiskState(),
-        api.getTier(),
-        api.getCapitalCurve(),
-        api.getLotHistory(),
-        api.getStatsSummary(),
+        api.getTrades().catch(() => [] as any[]),
+        api.getRiskState().catch(() => null),
+        api.getTier().catch(() => ({ tier: null, startingCapital: 58.18 })),
+        api.getCapitalCurve().catch(() => []),
+        api.getLotHistory().catch(() => []),
+        api.getStatsSummary().catch(() => null),
         api.getDeposits().catch(() => ({ total_invested: 0, deposit_count: 0, deposits: [] })),
       ])
-      setTrades(tradesData)
+      setTrades(tradesData ?? [])
 
+      const safeRisk = riskData as api.RiskState | null
       setRiskState((prevRisk) => {
+        if (!safeRisk) return prevRisk // keep previous on failure
         const cachedCapital = localStorage.getItem('linhoking_cached_capital')
         const prevCap = prevRisk?.capital || (cachedCapital ? parseFloat(cachedCapital) : null)
 
-        // If the serverless container returned default 200 but we have a live non-200 balance, keep live balance
-        if (riskData.capital === 200 && prevCap && prevCap !== 200) {
-          return { ...riskData, capital: prevCap }
+        if (safeRisk.capital === 200 && prevCap && prevCap !== 200) {
+          return { ...safeRisk, capital: prevCap }
         }
-        if (riskData.capital !== 200) {
-          localStorage.setItem('linhoking_cached_capital', riskData.capital.toString())
+        if (safeRisk.capital !== 200) {
+          localStorage.setItem('linhoking_cached_capital', safeRisk.capital.toString())
         }
-        return riskData
+        return safeRisk
       })
 
-      const capVal = riskData.capital !== 200 ? riskData.capital : (tierData.startingCapital !== 200 ? tierData.startingCapital : 58.18)
-      setStartingCapital(tierData.startingCapital !== 200 ? tierData.startingCapital : capVal)
+      const safeTier = tierData as { tier: any; startingCapital: number }
+      const capVal = safeRisk && safeRisk.capital !== 200 ? safeRisk.capital : (safeTier.startingCapital !== 200 ? safeTier.startingCapital : 58.18)
+      setStartingCapital(safeTier.startingCapital !== 200 ? safeTier.startingCapital : capVal)
       setTotalInvested(depositsData.total_invested)
       setDeposits(depositsData.deposits)
-      setCapitalCurve(curveData)
-      setLotHistory(lotData)
-      setStats(statsData)
+      setCapitalCurve(curveData ?? [])
+      setLotHistory(lotData ?? [])
+      if (statsData) setStats(statsData)
       setError(null)
       onRefreshUser?.()
     } catch (e) {
-      setError(e instanceof api.ApiError ? e.message : 'Impossible de charger les données')
+      // Even on catastrophic error, don't show error — just stop loading
+      console.error('Dashboard load error:', e)
     } finally {
       setLoading(false)
     }
