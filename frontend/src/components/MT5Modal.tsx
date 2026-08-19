@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Copy, Check, Key, RefreshCw, HelpCircle, Terminal } from 'lucide-react'
 import { rotateMt5Key } from '../lib/api'
+import { safeFixed } from '../lib/formatters'
 import type { Me } from '../context/AuthContext'
 
 interface Props {
@@ -120,7 +121,7 @@ input string ApiKey     = "${user.mt5ApiKey}";
                                 <div className="text-right">
                                     <div className="text-[10px] text-ink-500">Solde Synchronisé</div>
                                     <div className="text-[14px] font-extrabold text-signal-gain">
-                                        {user.mt5Balance !== null ? `${user.mt5Balance.toFixed(2)} USD` : '—'}
+                                        {user.mt5Balance !== null ? `${safeFixed(user.mt5Balance)} USD` : '—'}
                                     </div>
                                 </div>
                             </div>
