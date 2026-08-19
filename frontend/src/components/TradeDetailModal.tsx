@@ -83,14 +83,16 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            let options: MediaRecorderOptions = {}
+            let options: MediaRecorderOptions = { audioBitsPerSecond: 32000 }
             if (typeof MediaRecorder.isTypeSupported === 'function') {
-                if (MediaRecorder.isTypeSupported('audio/webm')) {
-                    options = { mimeType: 'audio/webm' }
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 32000 }
+                } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    options = { mimeType: 'audio/webm', audioBitsPerSecond: 32000 }
                 } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                    options = { mimeType: 'audio/mp4' }
+                    options = { mimeType: 'audio/mp4', audioBitsPerSecond: 32000 }
                 } else if (MediaRecorder.isTypeSupported('audio/aac')) {
-                    options = { mimeType: 'audio/aac' }
+                    options = { mimeType: 'audio/aac', audioBitsPerSecond: 32000 }
                 }
             }
             const mediaRecorder = new MediaRecorder(stream, options)
@@ -117,7 +119,13 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
             setRecordingTime(0)
 
             timerIntervalRef.current = setInterval(() => {
-                setRecordingTime((prev) => prev + 1)
+                setRecordingTime((prev) => {
+                    if (prev >= 180) { // Auto-stop after 3 minutes
+                        stopRecording()
+                        return 180
+                    }
+                    return prev + 1
+                })
             }, 1000)
         } catch {
             alert("Impossible d'accéder au microphone. Vérifiez les autorisations de votre navigateur.")
@@ -144,6 +152,10 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
     const handleUploadVoiceBlob = async (blob: Blob) => {
         if (!blob || blob.size === 0) {
             alert("Enregistrement trop court ou audio vide. Veuillez parler au moins 1 seconde.")
+            return
+        }
+        if (blob.size > 2.5 * 1024 * 1024) {
+            alert("Note vocale trop longue (max 2.5 Mo). Veuillez réaliser un enregistrement plus court.")
             return
         }
         try {
