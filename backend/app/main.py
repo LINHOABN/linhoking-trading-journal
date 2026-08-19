@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pathlib import Path
 import os
 import mimetypes
@@ -12,6 +13,7 @@ app = FastAPI(
     version="0.2.0",
 )
 
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
