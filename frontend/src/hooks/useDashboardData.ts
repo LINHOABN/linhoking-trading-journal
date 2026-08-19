@@ -75,7 +75,7 @@ export function useDashboardData(onRefreshUser?: () => void, user?: api.Me | nul
     load()
     const interval = setInterval(() => {
       load()
-    }, 5000)
+    }, 25000)
     return () => clearInterval(interval)
   }, [load, user])
 
