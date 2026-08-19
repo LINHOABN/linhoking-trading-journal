@@ -17,19 +17,23 @@ export default function LotHistoryChart({ data }: Props) {
   const textColor = theme === 'dark' ? '#8B92A0' : '#5B6470'
 
   const displayData = data && data.length > 0 ? data : [{ date: "Aujourd'hui", lot: 0.01 }]
-  const chartPoints = [...displayData]
+  const chartPoints = displayData.map((item) => ({
+    date: item?.date || "Aujourd'hui",
+    lot: typeof item?.lot === 'number' && !isNaN(item.lot) ? item.lot : 0.01,
+  }))
 
   const lots = chartPoints.map((p) => p.lot)
   const count = lots.length
-  const totalVolume = lots.reduce((acc, curr) => acc + curr, 0)
+  const totalVolume = lots.reduce((acc, curr) => acc + (typeof curr === 'number' && !isNaN(curr) ? curr : 0), 0)
   const avgLot = count > 0 ? totalVolume / count : 0.01
   const minLot = count > 0 ? Math.min(...lots) : 0.01
   const maxLot = count > 0 ? Math.max(...lots) : 0.01
-  const lastLot = count > 0 ? lots[lots.length - 1] : 0.01
+  const lastLot = count > 0 ? (lots[lots.length - 1] ?? 0.01) : 0.01
 
   const yMin = Math.max(0, Math.floor((minLot - 0.01) * 100) / 100)
   const yMax = minLot === maxLot ? Math.ceil((maxLot + 0.03) * 100) / 100 : Math.ceil((maxLot + 0.02) * 100) / 100
   const yDomain: [number, number] = [yMin, yMax]
+
 
   return (
     <div className="border border-graphite-700 dark:border-graphite-700 p-6 bg-paper-50 dark:bg-graphite-900 rounded">
@@ -54,8 +58,8 @@ export default function LotHistoryChart({ data }: Props) {
           <button
             onClick={() => setViewMode('chart')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded transition-colors ${viewMode === 'chart'
-                ? 'bg-blue-600 text-white font-semibold shadow'
-                : 'text-ink-500 hover:text-ink-900 dark:text-ink-300 dark:hover:text-white'
+              ? 'bg-blue-600 text-white font-semibold shadow'
+              : 'text-ink-500 hover:text-ink-900 dark:text-ink-300 dark:hover:text-white'
               }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -64,8 +68,8 @@ export default function LotHistoryChart({ data }: Props) {
           <button
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded transition-colors ${viewMode === 'table'
-                ? 'bg-blue-600 text-white font-semibold shadow'
-                : 'text-ink-500 hover:text-ink-900 dark:text-ink-300 dark:hover:text-white'
+              ? 'bg-blue-600 text-white font-semibold shadow'
+              : 'text-ink-500 hover:text-ink-900 dark:text-ink-300 dark:hover:text-white'
               }`}
           >
             <TableIcon className="w-3.5 h-3.5" />
