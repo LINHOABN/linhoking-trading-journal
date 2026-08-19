@@ -368,9 +368,9 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
                             <div className="relative group flex-1 flex flex-col items-center justify-center min-h-[300px] max-h-[450px] bg-black/40 rounded border border-graphite-700 p-2 overflow-hidden">
                                 <img
                                     src={
-                                        currentPhoto.startsWith('http')
+                                        currentPhoto.startsWith('http') || currentPhoto.startsWith('data:')
                                             ? currentPhoto
-                                            : `http://localhost:8000${currentPhoto}`
+                                            : `${getApiUrl()}${currentPhoto}`
                                     }
                                     alt={`Capture trade ${selectedPhotoIndex + 1}`}
                                     onClick={() => setLightboxIndex(selectedPhotoIndex)}
@@ -450,7 +450,11 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
                                             }`}
                                     >
                                         <img
-                                            src={url.startsWith('http') ? url : `http://localhost:8000${url}`}
+                                            src={
+                                                url.startsWith('http') || url.startsWith('data:')
+                                                    ? url
+                                                    : `${getApiUrl()}${url}`
+                                            }
                                             alt={`Miniature ${idx + 1}`}
                                             className="h-full w-full object-cover"
                                         />
@@ -769,9 +773,9 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
 
                         <img
                             src={
-                                screenshots[lightboxIndex].startsWith('http')
+                                screenshots[lightboxIndex].startsWith('http') || screenshots[lightboxIndex].startsWith('data:')
                                     ? screenshots[lightboxIndex]
-                                    : `http://localhost:8000${screenshots[lightboxIndex]}`
+                                    : `${getApiUrl()}${screenshots[lightboxIndex]}`
                             }
                             alt="Capture zoomée"
                             className="max-h-[88vh] max-w-[92vw] object-contain rounded border border-graphite-700 shadow-2xl"

@@ -213,16 +213,12 @@ async def upload_trade_screenshot(
     if not trade:
         raise HTTPException(status_code=404, detail="Trade introuvable")
 
-    ext = os.path.splitext(file.filename)[1] or ".jpg"
-    filename = f"{uuid.uuid4().hex}{ext}"
-    filepath = os.path.join("uploads", filename)
-
+    import base64
     content = await file.read()
-    with open(filepath, "wb") as f:
-        f.write(content)
+    content_type = file.content_type or "image/jpeg"
+    b64 = base64.b64encode(content).decode("utf-8")
+    new_url = f"data:{content_type};base64,{b64}"
 
-    new_url = f"/uploads/{filename}"
-    
     # Parse existing screenshots or create new list
     existing_urls = []
     if trade.screenshot_url:
