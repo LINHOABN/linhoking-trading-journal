@@ -108,6 +108,19 @@ async def receive_balance(
         tier.next_objective = _next_objective(tier.current_capital)
         db.add(tier)
 
+        # Ensure an initial CapitalSnapshot exists so charts render immediately
+        from datetime import date
+        has_snapshot = db.query(models.CapitalSnapshot).filter(models.CapitalSnapshot.user_id == current_user.id).first()
+        if not has_snapshot:
+            db.add(
+                models.CapitalSnapshot(
+                    user_id=current_user.id,
+                    snapshot_date=date.today(),
+                    capital=payload.balance,
+                    lot=tier.active_lot,
+                )
+            )
+
     db.commit()
 
     await manager.send_to_user(
