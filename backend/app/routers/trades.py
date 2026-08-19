@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 from datetime import date, time
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -341,6 +341,7 @@ async def upload_trade_voice_base64(
 @router.get("/{trade_id}/audio")
 def get_trade_audio(
     trade_id: str,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     trade = db.query(models.Trade).filter(models.Trade.id == trade_id).first()
@@ -354,12 +355,36 @@ def get_trade_audio(
             header, b64_str = voice_data.split(";base64,", 1)
             media_type = header.replace("data:", "") or "audio/webm"
             audio_bytes = base64.b64decode(b64_str)
+            total_size = len(audio_bytes)
+
+            range_header = request.headers.get("range")
+            if range_header and range_header.startswith("bytes="):
+                try:
+                    bytes_range = range_header.replace("bytes=", "").split("-")
+                    start = int(bytes_range[0]) if bytes_range[0] else 0
+                    end = int(bytes_range[1]) if len(bytes_range) > 1 and bytes_range[1] else total_size - 1
+                    end = min(end, total_size - 1)
+                    sliced_content = audio_bytes[start : end + 1]
+                    return Response(
+                        content=sliced_content,
+                        status_code=206,
+                        media_type=media_type,
+                        headers={
+                            "Content-Range": f"bytes {start}-{end}/{total_size}",
+                            "Accept-Ranges": "bytes",
+                            "Content-Length": str(len(sliced_content)),
+                            "Content-Disposition": "inline",
+                        },
+                    )
+                except Exception:
+                    pass
+
             return Response(
                 content=audio_bytes,
                 media_type=media_type,
                 headers={
                     "Accept-Ranges": "bytes",
-                    "Content-Length": str(len(audio_bytes)),
+                    "Content-Length": str(total_size),
                     "Content-Disposition": "inline",
                 },
             )

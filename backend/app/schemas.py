@@ -83,9 +83,8 @@ class TradeOut(TradeBase):
     def transform_voice_url(cls, v: Optional[str], info) -> Optional[str]:
         if not v:
             return None
-        if v.startswith("/trades/") or v.startswith("http"):
+        if v.startswith("/trades/") or v.startswith("http") or v.startswith("data:"):
             return v
-        # Convert base64 data URIs into lightweight URL endpoint to keep GET /trades payload tiny (<20KB)
         trade_id = info.data.get("id") if hasattr(info, "data") and isinstance(info.data, dict) else None
         if trade_id:
             return f"/trades/{trade_id}/audio"
