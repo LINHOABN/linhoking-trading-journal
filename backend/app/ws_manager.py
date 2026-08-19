@@ -20,8 +20,12 @@ class ConnectionManager:
             self.active[user_id].remove(ws)
 
     async def send_to_user(self, user_id: str, message: dict) -> None:
-        for ws in self.active.get(user_id, []):
-            await ws.send_json(message)
+        sockets = list(self.active.get(user_id, []))
+        for ws in sockets:
+            try:
+                await ws.send_json(message)
+            except Exception:
+                self.disconnect(user_id, ws)
 
 
 manager = ConnectionManager()
