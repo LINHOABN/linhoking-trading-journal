@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./linhoking.db"
+    DATABASE_URL: str = "postgresql://neondb_owner:npg_d1nbjryI6fkY@ep-polished-tooth-axxgxy47-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require"
     SECRET_KEY: str = "change-me-to-a-long-random-string"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200  # 30 jours
     ALGORITHM: str = "HS256"
@@ -19,10 +19,7 @@ class Settings(BaseSettings):
 
     @property
     def db_url(self) -> str:
-        url = self.DATABASE_URL
-        if os.environ.get("VERCEL") == "1" and url.startswith("sqlite:///./"):
-            return "sqlite:////tmp/linhoking.db"
-        return url
+        return self.DATABASE_URL
 
 
 settings = Settings()
