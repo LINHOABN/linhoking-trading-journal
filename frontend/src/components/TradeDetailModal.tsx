@@ -20,7 +20,7 @@ import {
     Volume2,
 } from 'lucide-react'
 import type { Trade } from '../types'
-import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice } from '../lib/api'
+import { updateTrade, uploadTradeScreenshot, deleteTradeScreenshot, uploadTradeVoice, deleteTradeVoice, getApiUrl } from '../lib/api'
 import { safeFixed } from '../lib/formatters'
 
 interface Props {
@@ -655,7 +655,11 @@ export default function TradeDetailModal({ trade, onClose, onTradeUpdated }: Pro
                                     <div className="flex items-center gap-3 border border-graphite-700 p-2.5 bg-paper-50 dark:bg-graphite-900 rounded">
                                         <audio
                                             ref={audioPlayerRef}
-                                            src={trade.voiceUrl}
+                                            src={
+                                                trade.voiceUrl.startsWith('http') || trade.voiceUrl.startsWith('data:')
+                                                    ? trade.voiceUrl
+                                                    : `${getApiUrl()}${trade.voiceUrl}`
+                                            }
                                             controls
                                             className="w-full h-8 focus:outline-none"
                                         />

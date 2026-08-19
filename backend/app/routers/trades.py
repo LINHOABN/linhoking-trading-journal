@@ -354,7 +354,15 @@ def get_trade_audio(
             header, b64_str = voice_data.split(";base64,", 1)
             media_type = header.replace("data:", "") or "audio/webm"
             audio_bytes = base64.b64decode(b64_str)
-            return Response(content=audio_bytes, media_type=media_type)
+            return Response(
+                content=audio_bytes,
+                media_type=media_type,
+                headers={
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(len(audio_bytes)),
+                    "Content-Disposition": "inline",
+                },
+            )
         except Exception:
             raise HTTPException(status_code=500, detail="Erreur de décodage audio")
 
