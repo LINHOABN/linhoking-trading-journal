@@ -37,18 +37,18 @@ def get_dashboard_summary(
     db: Session = Depends(get_db),
 ):
     from app.routers.risk import get_risk_state
-    from app.routers.tiers import get_tier, get_capital_curve, get_lot_history
-    from app.routers.stats import get_stats_summary
-    from app.routers.deposits import get_deposits
+    from app.routers.tiers import get_my_tier
+    from app.routers.stats import summary as get_stats_summary, capital_curve, lot_history
+    from app.routers.deposits import list_deposits
 
     raw_trades = list_trades(limit=1000, current_user=current_user, db=db)
     trades_list = [schemas.TradeOut.model_validate(t) for t in raw_trades]
     risk_state = get_risk_state(current_user=current_user, db=db)
-    tier_data = get_tier(current_user=current_user, db=db)
-    curve_data = get_capital_curve(current_user=current_user, db=db)
-    lot_data = get_lot_history(current_user=current_user, db=db)
+    tier_data = get_my_tier(current_user=current_user, db=db)
+    curve_data = capital_curve(current_user=current_user, db=db)
+    lot_data = lot_history(current_user=current_user, db=db)
     stats_data = get_stats_summary(current_user=current_user, db=db)
-    deposits_data = get_deposits(current_user=current_user, db=db)
+    deposits_data = list_deposits(current_user=current_user, db=db)
 
     return {
         "trades": trades_list,
