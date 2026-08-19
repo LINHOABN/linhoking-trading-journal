@@ -16,11 +16,19 @@ def create_db_engine(url: str):
         pool_recycle=300,
     )
 
+import tempfile
+import os
+
+fallback_db_path = os.path.join(tempfile.gettempdir(), "linhoking_sql_app.db")
+FALLBACK_SQLITE_URL = f"sqlite:///{fallback_db_path}"
+
 try:
     engine = create_db_engine(db_url)
+    with engine.connect() as conn:
+        pass
 except Exception as e:
-    print(f"[DB Engine Warning] Primary DB connection failed ({e}). Falling back to local SQLite.")
-    db_url = "sqlite:///./sql_app.db"
+    print(f"[DB Engine Warning] Primary DB connection failed ({e}). Falling back to temp SQLite: {FALLBACK_SQLITE_URL}")
+    db_url = FALLBACK_SQLITE_URL
     engine = create_db_engine(db_url)
     is_sqlite = True
 
@@ -41,15 +49,14 @@ def get_db():
                 conn.execute(text("ALTER TABLE trades ADD COLUMN IF NOT EXISTS voice_url VARCHAR;"))
                 conn.commit()
     except Exception as e:
-        print(f"[DB Warning] Primary DB create_all or query failed: {e}. Switching session engine if needed.")
+        print(f"[DB Warning] Primary DB query failed: {e}. Switching to temp SQLite engine.")
         if not is_sqlite:
             try:
-                db_url_fallback = "sqlite:///./sql_app.db"
-                engine = create_db_engine(db_url_fallback)
+                engine = create_db_engine(FALLBACK_SQLITE_URL)
                 is_sqlite = True
                 Base.metadata.create_all(bind=engine)
             except Exception as fb_err:
-                print(f"[DB Critical] Fallback SQLite also failed: {fb_err}")
+                print(f"[DB Critical] Fallback SQLite failed: {fb_err}")
     db = SessionLocal()
     try:
         yield db
