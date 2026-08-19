@@ -55,47 +55,52 @@ def list_trades(
         ]
         seed_file = next((p for p in candidate_paths if p.exists()), None)
         if seed_file:
-            with open(seed_file, "r", encoding="utf-8") as sf:
-                raw_trades = json.load(sf)
-            
-            existing_tickets = {
-                t.mt5_ticket for t in db.query(models.Trade.mt5_ticket).filter(models.Trade.user_id == current_user.id).all() if t.mt5_ticket
-            }
-            
-            for tr in raw_trades:
-                ticket = tr.get("mt5_ticket")
-                if ticket and ticket in existing_tickets:
-                    continue
-                t_d = date.fromisoformat(tr["trade_date"])
-                o_t = time.fromisoformat(tr["open_time"])
-                c_t = time.fromisoformat(tr["close_time"])
-                db.add(
-                    models.Trade(
-                        user_id=current_user.id,
-                        trade_date=t_d,
-                        open_time=o_t,
-                        close_time=c_t,
-                        symbol=tr.get("symbol", "XAUUSD"),
-                        direction=tr.get("direction", "BUY"),
-                        volume=tr.get("volume", 0.01),
-                        entry_price=tr.get("entry_price", 0.0),
-                        exit_price=tr.get("exit_price", 0.0),
-                        stop_loss=tr.get("stop_loss", 0.0),
-                        take_profit=tr.get("take_profit", 0.0),
-                        pnl=tr.get("pnl", 0.0),
-                        session=tr.get("session"),
-                        mt5_ticket=ticket,
-                        source=tr.get("source", "mt5"),
+            try:
+                with open(seed_file, "r", encoding="utf-8") as sf:
+                    raw_trades = json.load(sf)
+                
+                # Check global tickets to avoid unique constraint collisions on mt5_ticket
+                global_tickets = {
+                    t[0] for t in db.query(models.Trade.mt5_ticket).filter(models.Trade.mt5_ticket.isnot(None)).all()
+                }
+                
+                for tr in raw_trades:
+                    ticket = tr.get("mt5_ticket")
+                    if ticket and str(ticket) in global_tickets:
+                        ticket = f"SEED-{current_user.id[:4]}-{ticket}"
+                    t_d = date.fromisoformat(tr["trade_date"])
+                    o_t = time.fromisoformat(tr["open_time"])
+                    c_t = time.fromisoformat(tr["close_time"])
+                    db.add(
+                        models.Trade(
+                            user_id=current_user.id,
+                            trade_date=t_d,
+                            open_time=o_t,
+                            close_time=c_t,
+                            symbol=tr.get("symbol", "XAUUSD"),
+                            direction=tr.get("direction", "BUY"),
+                            volume=tr.get("volume", 0.01),
+                            entry_price=tr.get("entry_price", 0.0),
+                            exit_price=tr.get("exit_price", 0.0),
+                            stop_loss=tr.get("stop_loss", 0.0),
+                            take_profit=tr.get("take_profit", 0.0),
+                            pnl=tr.get("pnl", 0.0),
+                            session=tr.get("session"),
+                            mt5_ticket=str(ticket) if ticket else None,
+                            source=tr.get("source", "mt5"),
+                        )
                     )
+                db.commit()
+                trades = (
+                    db.query(models.Trade)
+                    .filter(models.Trade.user_id == current_user.id)
+                    .order_by(desc(models.Trade.trade_date), desc(models.Trade.open_time))
+                    .limit(limit)
+                    .all()
                 )
-            db.commit()
-            trades = (
-                db.query(models.Trade)
-                .filter(models.Trade.user_id == current_user.id)
-                .order_by(desc(models.Trade.trade_date), desc(models.Trade.open_time))
-                .limit(limit)
-                .all()
-            )
+            except Exception as e:
+                db.rollback()
+                print(f"[AutoSeed] Warning: Failed to seed trades: {e}")
 
     for t in trades:
         if not t.session:
